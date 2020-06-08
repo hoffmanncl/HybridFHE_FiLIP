@@ -326,6 +326,7 @@ namespace {
             IntPolynomial *mess = new_random_IntPolynomial(N);
             double alpha = 4.2; // valeur pseudo aleatoire fixé
 
+            printf("Coucou\n\n\n");
             tGswSymEncrypt(s, mess, alpha, key);
 
             FakeTGsw *fs = fake(s);

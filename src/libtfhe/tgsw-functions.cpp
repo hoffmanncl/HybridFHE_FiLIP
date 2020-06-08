@@ -221,16 +221,16 @@ EXPORT void tGswSymDecrypt(IntPolynomial *result, const TGswSample *sample, cons
     TorusPolynomial *tmp = new_TorusPolynomial(N);
     IntPolynomial *decomp = new_IntPolynomial_array(l, N);
 
-    const Torus32 indic = modSwitchToTorus32(1, Msize);
-    torusPolynomialClear(testvec);
+    const Torus32 indic = modSwitchToTorus32(1, Msize); // Get the width of the interval between two messages
+    torusPolynomialClear(testvec);                      // Clear = set to 0
     testvec->coefsT[0] = indic;
     tGswTorus32PolynomialDecompH(decomp, testvec, params);
 
     torusPolynomialClear(testvec);
     for (int32_t i = 0; i < l; i++) {
         for (int32_t j = 1; j < N; j++) assert(decomp[i].coefs[j] == 0);
-        tLwePhase(tmp, &sample->bloc_sample[k][i], &key->tlwe_key);
-        torusPolynomialAddMulR(testvec, decomp + i, tmp);
+        tLwePhase(tmp, &sample->bloc_sample[k][i], &key->tlwe_key); // Not a tlwe sample ?!
+        torusPolynomialAddMulR(testvec, decomp + i, tmp);           
     }
     for (int32_t i = 0; i < N; i++)
         result->coefs[i] = modSwitchFromTorus32(testvec->coefsT[i], Msize);
