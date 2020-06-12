@@ -8,49 +8,27 @@
 
 TGswKey	*new_random_key(const TGswParams *params);
 void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const TGswKey *key);
-TGswKey	*new_random_tgswkey(const TGswParams *params);
 int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key);
 Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key);
 void	tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *params);
 void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params);
 
 
-void	display_tlwesample(const TLweSample *sample);
-void	test_tlwe_add_to(const TGswKey *key);
-void	test_tlwe_encrypt_zero(const TGswKey *key);
+int		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
+int		test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
+int		test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
+int		test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
 
 
 
 int		main(int argc, char const *argv[])
 {
 	srand(time(NULL));
-	TGswParams		*tgsw_params = new_TGswParams(4, 1, new_TLweParams(1024, 2, 0., 1.));	// l, Bgbit, N, k, alpha_min, alpha_max (alpha_min = noise, alpha_max = decryption threshold)
-	// Bg = 2^Bgbit
-
+	TGswParams		*tgsw_params = new_TGswParams(8, 1, new_TLweParams(1024, 2, 0., 1.));	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max (alpha_min = noise, alpha_max = decryption threshold)
 	TGswKey			*key = new_random_key(tgsw_params);
-	int32_t			N = key->params->tlwe_params->N;
-	int32_t			k = key->params->tlwe_params->k;
+	
+	test_hom_mul(key, 0.0001, 100);
 
-	printf("N = %d\tk = %d\n\n", N, k);
-
-	test_tlwe_add_to(key);
-	/* Test hom op
-
-	TGswSample		*cipher_1 = new_TGswSample(key->params);
-	TGswSample		*cipher_2 = new_TGswSample(key->params);
-	double			alpha = 0.1; // noise param
-	int32_t			result;
-
-	tGswEncryptB(cipher_1, atoi(argv[0]), alpha, key);
-	tGswEncryptB(cipher_2, atoi(argv[1]), alpha, key);
-	tGswHomMul(cipher_1, cipher_2, tgsw_params);
-	result = tGswDecryptB(cipher_1, key);
-
-	printf("%d\n", result);
-
-
-	delete_TGswSample(cipher_1);
-	delete_TGswSample(cipher_2);*/
 	delete_TGswParams(tgsw_params);
 	delete_TGswKey(key);
 	return 0;
@@ -90,18 +68,6 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 }
 
 
-void	display_tlwesample(const TLweSample *sample)
-{
-	for(int i = 0 ; i < sample->k ; i++)
-	{
-		for(int j = 0 ; j < 10 ; j++)
-			printf("%u\t", sample->a[i].coefsT[j]);
-		printf("\n");
-	}
-	printf("\n");
-}
-
-
 Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
 {
 	TLweSample		*c = cipher->all_sample;
@@ -112,6 +78,7 @@ Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
 	tLwePhase(phase, c, &key->tlwe_key);
 	deciphered = tLweSymDecryptT(c, &key->tlwe_key, 2);
 	result = deciphered - phase->coefsT[0];
+	delete_TLweSample(c);
 
 	return result > 0 ? result : -result;
 }
@@ -142,41 +109,122 @@ void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *
 // =================    TESTS    =============================
 
 
-void	test_tlwe_encrypt_zero(const TGswKey *key)
+int		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
 {
-	const TLweKey	*tlwe_key = &key->tlwe_key;
-	TLweSample		*cipher = new_TLweSample(key->tlwe_params);
-	Torus32			test_result;
+	TGswSample	*cipher = new_TGswSample(key->params);
+	int32_t		success_count;
+	int			ret = 1;
 
-
-	printf("alpha_max = %f\n", tlwe_key->params->alpha_max);
-	tLweSymEncryptZero(cipher, 1.8, tlwe_key);
-	test_result = tLweSymDecryptT(cipher, tlwe_key, 2);					// MSize = 2
-	printf("%d\n", test_result);
-	printf("%d\n", modSwitchFromTorus32(test_result, 2));
+	for(int m = 0 ; m < 2 ; m++)
+	{
+		success_count = 0;
+		for(int i = 0 ; i < nb_tests ; i++)
+		{
+			tGswEncryptB(cipher, m, alpha, key);
+			if(m == tGswDecryptB(cipher, key))
+				success_count++;
+		}
+		//printf("Message = %d : Among %d tests, %d successful\n\n", m, nb_tests, success_count);
+		if(success_count < nb_tests)
+			ret = 0;
+	}
+	delete_TGswSample(cipher);
+	return ret;
 }
 
 
-void	test_tlwe_add_to(const TGswKey *key)
+int		test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
 {
-	const TLweKey	*tlwe_key = &key->tlwe_key;
-	TLweSample		*cipher_1 = new_TLweSample(key->tlwe_params);
-	TLweSample		*cipher_2 = new_TLweSample(key->tlwe_params);
-	double 			alpha = 1.0;
-	Torus32			buf;
-	Torus32			test_result;
+	TGswSample	*cipher_1 = new_TGswSample(key->params);
+	TGswSample	*cipher_2 = new_TGswSample(key->params);
+	int32_t		success_count;
+	int32_t		ret = 1;
 
-	for(int32_t i = 0 ; i < 2 ; i++)
-		for(int32_t j = 0 ; j < 2 ; j++)
+	for(int m1 = 0 ; m1 < 2 ; m1++)
+		for(int m2 = 0 ; m2 < 2 ; m2++)
 		{
-			printf("m1 = %d\tm2 = %d\n", i, j);
-			buf = modSwitchToTorus32(i, 2);
-			tLweSymEncryptT(cipher_1, buf, alpha, tlwe_key);
-			buf = modSwitchToTorus32(j, 2);
-			tLweSymEncryptT(cipher_2, buf, alpha, tlwe_key);
-
-			printf("VERIF DECRYPT : %d\t%d\n\n", modSwitchFromTorus32(tLweSymDecryptT(cipher_1, tlwe_key, 2), 2), modSwitchFromTorus32(tLweSymDecryptT(cipher_2, tlwe_key, 2), 2));
-
-			//printf("m1^m2 = %d\n", test_result);
+			success_count = 0;
+			for(int i = 0 ; i < nb_tests ; i++)
+			{
+				tGswEncryptB(cipher_1, m1, alpha, key);
+				tGswEncryptB(cipher_2, m2, alpha, key);
+				tGswHomAdd(cipher_1, cipher_2, key->params);
+				if(m1^m2 == tGswDecryptB(cipher_1, key))
+					success_count++;
+			}
+			//printf("Message 1 = %d\tMessage 2 = %d\nAmong %d tests, %d successful\n\n", m1, m2, nb_tests, success_count);
+			if(success_count < nb_tests)
+				ret = 0;
 		}
+	delete_TGswSample(cipher_1);
+	delete_TGswSample(cipher_2);
+	return ret;
+}
+
+
+int		test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TGswSample	*cipher_1 = new_TGswSample(key->params);
+	TGswSample	*cipher_2 = new_TGswSample(key->params);
+	int32_t		success_count;
+	int32_t		ret = 1;
+
+	for(int m1 = 0 ; m1 < 2 ; m1++)
+		for(int m2 = 0 ; m2 < 2 ; m2++)
+		{
+			success_count = 0;
+			for(int i = 0 ; i < nb_tests ; i++)
+			{
+				tGswEncryptB(cipher_1, m1, alpha, key);
+				tGswEncryptB(cipher_2, m2, alpha, key);
+				tGswHomMul(cipher_1, cipher_2, key->params);
+				if(m1 * m2 == tGswDecryptB(cipher_1, key))
+					success_count++;
+			}
+			printf("Message 1 = %d\tMessage 2 = %d\nAmong %d tests, %d successful\n\n", m1, m2, nb_tests, success_count);
+			if(success_count < nb_tests)
+				ret = 0;
+		}
+	delete_TGswSample(cipher_1);
+	delete_TGswSample(cipher_2);
+	return ret;
+}
+
+
+int		test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	const TLweKey		*tlwe_key = &key->tlwe_key;
+	const TGswParams	*params = key->params;
+	TGswSample			*cipher_1 = new_TGswSample(key->params);
+	TLweSample			*cipher_2 = new_TLweSample(key->tlwe_params);
+	TLweSample			*result = new_TLweSample(key->tlwe_params);
+	int					success_count;
+	int					ret = 1;
+
+	for(int32_t m1 = 0 ; m1 < 2 ; m1++)
+		for(int32_t m2 = 0 ; m2 < 2 ; m2++)
+		{
+			success_count = 0;
+			for(int i = 0 ; i < nb_tests ; i++)
+			{
+				tGswEncryptB(cipher_1, m1, alpha, key);
+				tLweSymEncryptT(cipher_2, modSwitchToTorus32(m2, 2), alpha, tlwe_key);
+				if(m1 != tGswDecryptB(cipher_1, key))
+				{
+					printf("Oupsie\n");
+					return 0;
+				}
+				tGswExternProduct(result, cipher_1, cipher_2, params);
+				if(modSwitchFromTorus32(tLweSymDecryptT(result, tlwe_key, 2), 2) == m1 * m2)
+					success_count++;
+			} 
+			//printf("Message 1 = %d\tMessage 2 = %d\nAmong %d tests, %d successful\n\n", m1, m2, nb_tests, success_count);
+			if(success_count < nb_tests)
+				ret = 0;
+		}
+
+	delete_TGswSample(cipher_1);
+	delete_TLweSample(cipher_2);
+	delete_TLweSample(result);
+	return ret;
 }
