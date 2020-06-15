@@ -1,0 +1,27 @@
+#ifndef	__TGSW_OPERATIONS_H
+#define	__TGSW_OPERATIONS_H
+
+
+#ifndef	__LIBS
+#define	__LIBS
+
+	#include	<stdio.h>
+	#include	<stdlib.h>
+	#include	<time.h>
+	#include	<iostream>
+
+	#include	<tfhe/tfhe.h>
+	#include	<tfhe/tfhe_io.h>
+
+#endif
+
+
+TGswKey	*new_random_key(const TGswParams *params);
+void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const TGswKey *key);
+int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key);
+Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key);
+void	tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *params);
+void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params);
+
+
+#endif
