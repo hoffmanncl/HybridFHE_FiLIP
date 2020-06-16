@@ -1,5 +1,5 @@
-#ifndef	__FILIP_H
-#define	__FILIP_H
+#ifndef	__FILIP_SERVER_H
+#define	__FILIP_SERVER_H
 
 
 #ifndef	__LIBS
@@ -16,7 +16,7 @@
 #endif
 
 
-void		test();
+
 
 
 #endif
