@@ -1,11 +1,63 @@
-#include	"include/filip_user.h"
-#include	"include/filip_server.h"
+#include	"include/filip.h"
 #include	"include/tgsw_operations.h"
 
 
 int		main(int argc, char const *argv[])
 {
-	long	*key, *message, *cipher, *deciphered;
+
+	return 0;
+}
+
+
+/* TEST FILIP_USER
+
+long	*key, *message, *cipher, *deciphered;
+int		k_size, m_size;
+int		i;
+
+k_size = 100;
+m_size = 10;
+key = (long*)malloc(sizeof(long) * k_size);
+message = (long*)malloc(sizeof(long)  * m_size);
+cipher = (long*)malloc(sizeof(long) * m_size);
+deciphered = (long*)malloc(sizeof(long) * m_size);
+
+new_random_binary_sequence(key, k_size);
+new_random_binary_sequence(message, m_size);
+FiLIP(cipher, message, m_size, key, k_size);
+
+free(key);
+free(message);
+free(cipher);
+free(deciphered);*/
+
+
+
+/* TEST RESET_PRNG
+
+	long	*s = (long*)malloc(sizeof(long) * 15);
+	int		i;
+
+	for(int j = 0 ; j < 2 ; j++)
+	{
+		new_random_binary_sequence(s, 15);
+		for(i = 0 ; i < 15 ; i++)
+			printf("%ld", s[i]);
+		printf("\n");
+	}
+	reset_prng();
+	new_random_binary_sequence(s, 15);
+	for(i = 0 ; i < 15 ; i++)
+		printf("%ld", s[i]);
+	printf("\n");
+
+	free(s);
+*/
+
+
+
+/* TEST FILIP_USER
+long	*key, *message, *cipher, *deciphered;
 	int		k_size, m_size;
 	int		i;
 
@@ -18,12 +70,15 @@ int		main(int argc, char const *argv[])
 
 	new_random_binary_sequence(key, k_size);
 	new_random_binary_sequence(message, m_size);
-	FiLIP_encryption(cipher, message, m_size, key, k_size);
-	FiLIP_decryption(deciphered, cipher, m_size, key, k_size);
+	reset_prng();
+	FiLIP(cipher, message, m_size, key, k_size);
+	reset_prng();
+	FiLIP(deciphered, cipher, m_size, key, k_size);
 
 	for(i = 0 ; i < m_size ; i++)
 		if(deciphered[i] != message[i])
 			break;
+
 	if(i == m_size)
 		printf("Yay\n");
 	else
@@ -33,14 +88,4 @@ int		main(int argc, char const *argv[])
 	free(message);
 	free(cipher);
 	free(deciphered);
-
-	/* TEST FILTER
-	long	mf[3] = {2,3,1};
-	long	*state = (long*)malloc(sizeof(long) * 11);
-
-	new_random_binary_sequence(state, 11);
-	for(int i = 0 ; i < 11 ; i++)
-		printf("%ld", state[i]);
-	printf("\n%ld\n", filter(state, mf, 3));*/
-	return 0;
-}
+*/
