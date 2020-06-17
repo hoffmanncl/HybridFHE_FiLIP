@@ -1,5 +1,5 @@
-#ifndef	__FILIP_USER_H
-#define	__FILIP_USER_H
+#ifndef	__FILIP_H
+#define	__FILIP_H
 
 
 #ifndef	__LIBS
@@ -15,10 +15,18 @@
 
 #endif
 
-#define uchar unsigned char
-#define uint unsigned long
+
+#define		uchar	unsigned char
+#define		uint	unsigned long
+
 
 using namespace std;
+
+
+extern TGswParams	*TGSW_PARAMS;
+extern TGswKey		*TGSW_KEY;
+extern TGswSample	*CIPHER_OF_ZERO;
+extern TGswSample	*CIPHER_OF_ONE;
 
 
 // aes.c
@@ -45,8 +53,20 @@ void		FiLIP(long *cipher, long *message, int m_size, long *key, int k_size);
 
 // filip_server.cpp
 
+void		deepcopy_tgsw(TGswSample *copy, TGswSample *sample);
+void		deepcopy_tlwe_sample(TLweSample *copy, TLweSample *sample);
+void		deepcopy_torus_polynomial(TorusPolynomial *copy, TorusPolynomial *poly);
+
 void		set_hom_whitening(TGswSample **h_whitening, int len);
-void		hom_filter(TGswSample *result, TGswSample **h_state, long *mf, int size);
+void		hom_filter(TGswSample *result, TGswSample **h_state, long *mf, int degree);
+void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
+
+
+// main.cpp
+
+void		init_globals();
+void		allocate_tgsw_array(TGswSample ***array, int size);
+void		free_tgsw_array(TGswSample ***array, int size);
 
 
 #endif

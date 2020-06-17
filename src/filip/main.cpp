@@ -2,10 +2,64 @@
 #include	"include/tgsw_operations.h"
 
 
+TGswParams	*TGSW_PARAMS = new_TGswParams(8, 1, new_TLweParams(1024, 2, 0., 1.));
+TGswKey		*TGSW_KEY = new_random_key(TGSW_PARAMS);
+TGswSample	*CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
+TGswSample	*CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
+
+
+
 int		main(int argc, char const *argv[])
 {
+	init_globals();
+	int			nb_var = 10, degree = 3;
+	long		mf[degree] = {1, 3, 1};
+	long		*vars;
+	TGswSample	**h_state;
+	TGswSample	*result = new_TGswSample(TGSW_PARAMS);
 
+	vars = (long*)malloc(sizeof(long) * nb_var);
+	allocate_tgsw_array(&h_state, nb_var);
+
+	new_random_binary_sequence(vars, nb_var);
+	for(int i = 0 ; i < nb_var ; i++)
+		deepcopy_tgsw(h_state[i], vars[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+
+	hom_filter(result, h_state, mf, 3);
+	if(filter(vars, mf, degree) == tGswDecryptB(result, TGSW_KEY))
+		printf("Yay\n");
+	else
+		printf(":c\n");
+
+	free(vars);
+	free_tgsw_array(&h_state, nb_var);
+	delete_TGswSample(result);
 	return 0;
+}
+
+
+void	init_globals()
+{
+	double			alpha = 1e-10;
+
+	tGswEncryptB(CIPHER_OF_ZERO, 0, alpha, TGSW_KEY);
+	tGswEncryptB(CIPHER_OF_ONE, 1, alpha, TGSW_KEY);
+}
+
+
+void	allocate_tgsw_array(TGswSample ***array, int size)
+{
+	*array = (TGswSample**)malloc(sizeof(TGswSample*) * size);
+	for(int i = 0 ; i < size ; i++)
+		(*array)[i] = new_TGswSample(TGSW_PARAMS);
+}
+
+
+void	free_tgsw_array(TGswSample ***array, int size)
+{
+	for(int i = 0 ; i < size ; i++)
+		delete_TGswSample((*array)[i]);
+	free(*array);
 }
 
 
