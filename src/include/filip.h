@@ -27,6 +27,10 @@ extern TGswParams	*TGSW_PARAMS;
 extern TGswKey		*TGSW_KEY;
 extern TGswSample	*CIPHER_OF_ZERO;
 extern TGswSample	*CIPHER_OF_ONE;
+extern int			degree;
+extern long			*mf;
+extern int			nb_var;
+
 
 
 // aes.c
@@ -46,9 +50,9 @@ void		shuffle(long *list, long len);
 // filip_user.cpp
 
 void		set_whitening (long* whitening, long len);
-long		filter(long *state, long *mf, long size);
+long		filter(long *state);
 
-void		FiLIP(long *cipher, long *message, int m_size, long *key, int k_size);
+void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 
 
 // filip_server.cpp
@@ -58,7 +62,7 @@ void		deepcopy_tlwe_sample(TLweSample *copy, TLweSample *sample);
 void		deepcopy_torus_polynomial(TorusPolynomial *copy, TorusPolynomial *poly);
 
 void		set_hom_whitening(TGswSample **h_whitening, int len);
-void		hom_filter(TGswSample *result, TGswSample **h_state, long *mf, int degree);
+void		hom_filter(TGswSample *result, TGswSample **h_state);
 void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 
 
