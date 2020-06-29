@@ -31,6 +31,9 @@ extern int			degree;
 extern long			*mf;
 extern int			nb_var;
 
+extern TGswSample	*FAKE_CIPHER_OF_ZERO;
+extern TGswSample	*FAKE_CIPHER_OF_ONE;
+
 
 
 // aes.c
@@ -64,6 +67,10 @@ void		deepcopy_torus_polynomial(TorusPolynomial *copy, TorusPolynomial *poly);
 void		set_hom_whitening(TGswSample **h_whitening, int len);
 void		hom_filter(TGswSample *result, TGswSample **h_state);
 void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
+
+void		fake_set_hom_whitening(TGswSample **h_whitening, int len);
+void		fake_hom_filter(TGswSample *result, TGswSample **h_state);
+void		fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 
 
 // main.cpp

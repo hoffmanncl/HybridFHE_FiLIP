@@ -29,7 +29,7 @@ long		filter(long *state)
 	int	 i,j,k;
 	long nb = 0;
 
-	printf("var of filter = ");
+	//printf("var of filter = ");
 	for(i = 0 ; i < nb_var ; i++)
 		printf("%ld", state[i]);
 	printf("\n");
@@ -38,7 +38,7 @@ long		filter(long *state)
 	for(i = 0 ; i < mf[0] ; i++)
 		output ^= state[nb++];
 
-	printf("After linear operations : %ld\n", output);
+	//printf("After linear operations : %ld\n", output);
 
 	//Computation of higher degree monomials
 	for(i = 1 ; i < degree ; i++)
@@ -48,11 +48,11 @@ long		filter(long *state)
 			for(k = 1 ; k < i + 1 ; k++)
 			{
 				temp *= state[nb++];
-				printf("i = %d ; j = %d ; k = %d : tmp = %ld\n", i, j, k, temp);
+				//printf("i = %d ; j = %d ; k = %d : tmp = %ld\n", i, j, k, temp);
 			}
 			output ^= temp;
 
-		printf("i = %d ; j = %d ; res = %ld\n", i, j, output);
+		//printf("i = %d ; j = %d ; res = %ld\n", i, j, output);
 		}
 	return output;
 }
