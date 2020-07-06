@@ -2,7 +2,7 @@
 #include	"include/tgsw_operations.h"
 
 
-TGswParams	*TGSW_PARAMS = new_TGswParams(8, 1, new_TLweParams(1024, 2, 0., 1.));
+TGswParams	*TGSW_PARAMS = new_TGswParams(16, 1, new_TLweParams(1024, 2, 0., 1.));
 TGswKey		*TGSW_KEY = new_random_key(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
@@ -21,7 +21,7 @@ int		main(int argc, char const *argv[])
 	init_globals();
 
 	long		*key, *message, *cipher;
-	int			k_size = 100, m_size = 20, i;
+	int			k_size = 100, m_size = 5, i;
 	TGswSample	**h_key, **h_message, **h_cipher;
 
 	key = (long*)malloc(sizeof(long) * k_size);
@@ -41,7 +41,7 @@ int		main(int argc, char const *argv[])
 	reset_prng();
 	FiLIP(cipher, message, m_size, key, k_size);
 	reset_prng();
-	fake_hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+	hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
 
 	for(i = 0 ; i < m_size ; i++)
 		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
@@ -92,6 +92,50 @@ void	free_tgsw_array(TGswSample ***array, int size)
 		delete_TGswSample((*array)[i]);
 	free(*array);
 }
+
+
+
+/*TEST FAKE_HOM_FILIP
+	init_globals();
+
+	long		*key, *message, *cipher;
+	int			k_size = 100, m_size = 20, i;
+	TGswSample	**h_key, **h_message, **h_cipher;
+
+	key = (long*)malloc(sizeof(long) * k_size);
+	message = (long*)malloc(sizeof(long) * m_size);
+	cipher = (long*)malloc(sizeof(long) * m_size);
+	allocate_tgsw_array(&h_key, k_size);
+	allocate_tgsw_array(&h_message, m_size);
+	allocate_tgsw_array(&h_cipher, m_size);
+
+	new_random_binary_sequence(key, k_size);
+	for(int i = 0 ; i < k_size ; i++)
+		deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+	new_random_binary_sequence(message, m_size);
+	for(int i = 0 ; i < m_size ; i++)
+		deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+
+	reset_prng();
+	FiLIP(cipher, message, m_size, key, k_size);
+	reset_prng();
+	fake_hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+
+	for(i = 0 ; i < m_size ; i++)
+		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
+			break;
+	if(i == m_size)
+		printf("Yay\n");
+	else
+		printf(":c %d\n", i);
+
+	free(key);
+	free(message);
+	free(cipher);
+	free_tgsw_array(&h_key, nb_var);
+	free_tgsw_array(&h_message, m_size);
+	free_tgsw_array(&h_cipher, m_size);
+*/
 
 
 

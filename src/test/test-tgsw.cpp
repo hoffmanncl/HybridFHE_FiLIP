@@ -8,35 +8,40 @@
 #include	"include/tgsw_operations.h"
 
 
-int		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
-int		test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
-int		test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
-int		test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
-void	test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests);
-void	test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
-void	test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
-void	test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests);
-void	test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests);
+int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
+int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
+int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
+int			test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
+void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests);
 
-long double	get_variance(int32_t *data, int size);
+int32_t		get_variance(int32_t *data, int size);
+int32_t		get_average(int32_t *data, int size);
+long double	get_r_variance(int32_t *noises, int32_t size);
+long double	get_r_average(long double *noises, int32_t size);
 
 
-int		main(int argc, char const *argv[])
+int			main(int argc, char const *argv[])
 {
 	srand(time(NULL));
-	TGswParams		*tgsw_params = new_TGswParams(8, 1, new_TLweParams(1024, 2, 0., 1.));	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max (alpha_min = noise, alpha_max = decryption threshold)
-	TGswKey			*key = new_random_key(tgsw_params);
-	double			alpha = 1e-5;
+	TGswParams	*params = new_TGswParams(16, 1, new_TLweParams(1024, 2, 0., 1.));	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max (alpha_min = noise, alpha_max = decryption threshold)
+	TGswKey		*key = new_random_key(params);
+	double		alpha = 1e-10;
 
-	test_fake_tGsw(key, alpha, 10);
-
-	delete_TGswParams(tgsw_params);
+	test_mul_noise(key, alpha, 1000);
+	
+	delete_TGswParams(params);
 	delete_TGswKey(key);
 	return 0;
 }
 
 
-int		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
+int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher = new_TGswSample(key->params);
 	int32_t		success_count;
@@ -60,7 +65,7 @@ int		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tes
 }
 
 
-int		test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
+int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher_1 = new_TGswSample(key->params);
 	TGswSample	*cipher_2 = new_TGswSample(key->params);
@@ -89,7 +94,7 @@ int		test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
 }
 
 
-int		test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests)
+int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher_1 = new_TGswSample(key->params);
 	TGswSample	*cipher_2 = new_TGswSample(key->params);
@@ -118,7 +123,7 @@ int		test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests)
 }
 
 
-int		test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests)
+int			test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	const TLweKey		*tlwe_key = &key->tlwe_key;
 	const TGswParams	*params = key->params;
@@ -152,7 +157,7 @@ int		test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests
 }
 
 
-void	test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests)
+void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample			*cipher_1 = new_TGswSample(key->params);
 	TGswSample			*cipher_2 = new_TGswSample(key->params);
@@ -188,66 +193,155 @@ void	test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tes
 }
 
 
-void	test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests)
+void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests)
 {
-	TGswSample	*cipher_1 = new_TGswSample(key->params);
-	TGswSample	*cipher_2 = new_TGswSample(key->params);
+	TGswSample	*cipher1 = new_TGswSample(key->params);
+	TGswSample	*cipher2 = new_TGswSample(key->params);
+	int32_t		max_depth, min_max_depth = 100;
+	int32_t		*max_depths = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+
+	printf("test_max_depth_cst_cipher - alpha = %e - nb_tests = %d\n", alpha, nb_tests);
+	for(int i = 0 ; i < nb_tests ; i++)
+	{
+		tGswEncryptB(cipher1, 1, alpha, key);
+		max_depth = 0;
+		while(tGswDecryptB(cipher1, key) == 1)
+		{
+			tGswEncryptB(cipher2, 1, alpha, key);
+			tGswHomMul(cipher1, cipher2, key->params);
+			max_depth++;
+		}
+		max_depths[i] = max_depth;
+		if(max_depth < min_max_depth)
+			min_max_depth = max_depth;
+	}
+	printf("min_max_depth = %2d ; average max_depth = %2d\n", min_max_depth, get_average(max_depths, nb_tests));
+}
+
+
+void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TGswSample	*cipher1 = new_TGswSample(key->params);
+	TGswSample	*cipher2 = new_TGswSample(key->params);
+	int32_t		m, max_depth, min_max_depth = 100;
+	int32_t		*max_depths = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+
+	printf("test_max_depth_random_cipher - alpha = %e - nb_tests = %d\n", alpha, nb_tests);
+	for(int i = 0 ; i < nb_tests ; i++)
+	{
+		tGswEncryptB(cipher1, 0, alpha, key);
+		max_depth = 0;
+		while(tGswDecryptB(cipher1, key) == 0)
+		{
+			m = rand() % 2;
+			tGswEncryptB(cipher2, m, alpha, key);
+			tGswHomMul(cipher1, cipher2, key->params);
+			max_depth++;
+		}
+		max_depths[i] = max_depth;
+		if(max_depth < min_max_depth)
+			min_max_depth = max_depth;
+	}
+	printf("min_max_depth = %2d ; average max_depth = %2d\n", min_max_depth, get_average(max_depths, nb_tests));
+}
+
+
+void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TGswSample	*cipher1 = new_TGswSample(key->params);
+	TGswSample	*cipher2 = new_TGswSample(key->params);
+	int32_t		max_depth = 2;
+	int32_t		**noises = (int32_t**)malloc(sizeof(int32_t*) * (max_depth + 1));
+	int32_t		i, j;
+
+	printf("verify_variance_formula - alpha = %e - nb_tests = %3d\n", alpha, nb_tests);
+	for(i = 0 ; i <= max_depth ; i++)
+		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+
+	for(j = 0 ; j < nb_tests ; j++)
+	{
+		tGswEncryptB(cipher1, 1, alpha, key);
+		noises[0][i] = getTGswCipherNoise(cipher1, key);
+		for(i = 1 ; i <= max_depth ; i++)
+		{
+			tGswEncryptB(cipher2, 1, alpha, key);
+			tGswHomMul(cipher1, cipher2, key->params);
+			if(tGswDecryptB(cipher1, key) != 1)
+				printf("mul_depth too big\n");
+			noises[i][j] = getTGswCipherNoise(cipher1, key);
+		}
+	}
+	for(i = 0 ; i <= max_depth ; i++)
+		printf("depth = %d ; var = %Le\n", i, get_r_variance(noises[i], nb_tests));
 	
-	int32_t	*noises = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+	for(i = 0 ; i <= max_depth ; i++)
+		free(noises[i]);
+	free(noises);
+}
+
+
+void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TGswSample	*left_op = new_TGswSample(key->params);
+	TGswSample	*right_op = new_TGswSample(key->params);
+	int32_t		max_mul_depth = 8, mul_depth, i;
+	int32_t		**noises = (int32_t**)malloc(sizeof(int32_t*) * (max_mul_depth + 2));
+
+	for(i = 0 ; i < max_mul_depth + 2 ; i++)
+		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
 
 	printf("test_mul_noise - noise parameter = %f\n\n", alpha);
 	for(int i = 0 ; i < nb_tests ; i++)
 	{
-		tGswEncryptB(cipher_1, 0, alpha, key);
-		tGswEncryptB(cipher_2, 1, alpha, key);
-		tGswHomMul(cipher_1, cipher_2, key->params);
-		noises[i] = getTGswCipherNoise(cipher_1, key);
-	}
-
-	printf("Variance = %Lf\n", get_variance(noises, nb_tests));
-
-
-	/*int			cnt, m, rand_m;
-	printf("test_mul_noise - noise parameter : %f\n\n", alpha);
-	m = rand() % 2;
-	for(int i = 0 ; i < nb_tests ; i++)
-	{
-		cnt = 0;
-		tGswEncryptB(cipher_1, m, alpha, key);
-		while(tGswDecryptB(cipher_1, key) == m)
+		tGswEncryptB(right_op, 1, alpha, key);
+		noises[0][i] = getTGswCipherNoise(right_op, key);
+		for(mul_depth = 1 ; mul_depth <= max_mul_depth ; mul_depth++)
 		{
-			rand_m = rand() % 2;
-			tGswEncryptB(cipher_2, rand_m, alpha, key);
-			printf("%d : %d\n", cnt++, getTGswCipherNoise(cipher_1, key));
-			tGswHomMul(cipher_1, cipher_2, key->params);
-			m *= rand_m;
+			tGswEncryptB(left_op, 1, alpha, key);
+			tGswHomMul(right_op, left_op, key->params);
+			if(tGswDecryptB(right_op, key) != 1)
+				printf("Max mul depth = %d\n", mul_depth);
+			noises[mul_depth][i] = getTGswCipherNoise(right_op, key);
 		}
-		printf("max mul depth : %d\n", cnt);
-	}*/
+		tGswEncryptB(left_op, 0, alpha, key);
+		tGswHomMul(right_op, left_op, key->params);
+		if(tGswDecryptB(right_op, key) != 0)
+			printf("Max mul depth = %d\n", mul_depth);
+		noises[max_mul_depth + 1][i] = getTGswCipherNoise(right_op, key);
+	}
+	for(mul_depth = 0 ; mul_depth <= max_mul_depth ; mul_depth++)
+		printf("Mul by 1 = %d ; Var = %Le\n", mul_depth, get_r_variance(noises[mul_depth], nb_tests));
+	printf("\n");
+	printf("Mul by 0 ; Var = %Le\n", get_r_variance(noises[max_mul_depth + 1], nb_tests));
+	
+
+	for(i = 0 ; i <= max_mul_depth + 1 ; i++)
+		free(noises[i]);
+	free(noises);
 }
 
 
-void	test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests)
+void		test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher = new_TGswSample(key->params);
-	int32_t		*noises = (int*)malloc(sizeof(int) * nb_tests);
+	int32_t		*noises = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
 
-	printf("get_fresh_ciphers_variance - noise parameter = %f\n\n", alpha);
+	printf("test_fresh_ciphers_variance - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
 	for(int m = 0 ; m < 2 ; m++)
 	{
-
 		for(int i = 0 ; i < nb_tests ; i++)
 		{
 			tGswEncryptB(cipher, m, alpha, key);
 			noises[i] = getTGswCipherNoise(cipher, key);
 		}
-		printf("Enc(%d) - var = %Lf\n", m, get_variance(noises, nb_tests));
+		printf("Enc(%d) - var = %Le\n", m, get_r_variance(noises, nb_tests));
 	}
-	printf("\n\n");
+	printf("\n");
+	free(noises);
 }
 
 
-void	test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests)
+void		test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher_1 = new_TGswSample(key->params);
 	TGswSample	*cipher_2 = new_TGswSample(key->params);
@@ -301,19 +395,50 @@ void	test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests)
 }
 
 
-long double	get_variance(int32_t *data, int size)
+int32_t		get_variance(int32_t *data, int size)
 {
-	long double	avr, var;
-	long double	d, sum = 0, sum_sqr = 0;
+	long double	var = 0;
+	int32_t		avr = get_average(data, size);
 
 	for(int i = 0 ; i < size ; i++)
-	{
-		d = data[i] / (1ULL<<32);
-		sum += d;
-		sum_sqr += d * d;
-	}
-	avr = sum / size;
-	var = sum_sqr / size - avr * avr;
+		var = (i * var + (data[i] - avr) * (data[i] - avr)) / (i + 1);
+	return (int32_t)var;
+}
 
+
+int32_t		get_average(int32_t *data, int size)
+{
+	long double	avr = 0.;
+
+	for(int i = 0 ; i < size ; i++)
+		avr = (i * avr + data[i]) / (i + 1);
+	return (int32_t)avr;
+}
+
+
+long double	get_r_variance(int32_t *noises, int32_t size)
+{
+	long double	avr, var = 0;
+	long double *r_noises = (long double*)malloc(sizeof(long double) * size);
+	int32_t		i;
+
+	for(i = 0 ; i < size ; i++)
+		r_noises[i] = (long double)noises[i] / ((long long unsigned int)1<<32);
+
+	avr = get_r_average(r_noises, size);
+	for(int i = 0 ; i < size ; i++)
+		var = (i * var + (r_noises[i] - avr) * (r_noises[i] - avr)) / (i + 1);
+
+	free(r_noises);
 	return var;
+}
+
+
+long double	get_r_average(long double *noises, int32_t size)
+{
+	long double	avr = 0;
+
+	for(int i = 0 ; i < size ; i++)
+		avr = (i * avr + noises[i]) / (i + 1);
+	return avr;
 }
