@@ -10,4 +10,4 @@ test : src/filip/tgsw-operations.cpp src/test/test-tgsw.cpp
 	g++ -I./src/ -o test src/test/test-tgsw.cpp src/filip/tgsw-operations.cpp -ltfhe-spqlios-fma
 
 clean :
-	rm -f filip
+	rm -f filip test

@@ -45,20 +45,13 @@ void	hom_filter(TGswSample *result, TGswSample **h_state)
 	int			i, j, k;
 	int			nb = 0;
 
-	printf("var of h_filter = ");
 	for(i = 0 ; i < nb_var ; i++)
 		printf("%d", tGswDecryptB(h_state[i], TGSW_KEY));
 	printf("\n");
 
 	deepcopy_tgsw(result, CIPHER_OF_ZERO);
-
-	if(tGswDecryptB(result, TGSW_KEY))
-		printf("error in dcp\n");
-
 	for(i = 0 ; i < mf[0] ; i++)
 		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
-
-	printf("After linear operations : %d\n", tGswDecryptB(result, TGSW_KEY));
 
 	for(i = 1 ; i < degree ; i++)
 	{
@@ -66,15 +59,8 @@ void	hom_filter(TGswSample *result, TGswSample **h_state)
 		{
 			deepcopy_tgsw(tmp, h_state[nb++]);
 			for(k = 1 ; k < i + 1 ; k++)
-			{
 				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
-				printf("i = %d ; j = %d ; k = %d : tmp = %d\n", i, j, k, tGswDecryptB(tmp, TGSW_KEY));
-			}
-			printf("i = %d ; j = %d : res = %d ; tmp = %d\n", i, j, tGswDecryptB(result, TGSW_KEY), tGswDecryptB(tmp, TGSW_KEY));
-			printf("tmp noise : %d\n", getTGswCipherNoise(tmp, TGSW_KEY));
-			printf("res noise : %d\n", getTGswCipherNoise(result, TGSW_KEY));
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
-			printf("res^tmp = %d\n", tGswDecryptB(result, TGSW_KEY));
 		}
 	}
 	delete_TGswSample(tmp);
@@ -90,9 +76,6 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 
 	allocate_tgsw_array(&h_state, nb_var);
 
-	printf("Entering hom_FiLIP : \n");
-
-	printf("input = ");
 	for(i = 0 ; i < m_size ; i++)
 		printf("%d", tGswDecryptB(input[i], TGSW_KEY));
 	printf("\n");
@@ -104,30 +87,12 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	{
 		shuffle(indice, k_size);
 		set_hom_whitening(h_state, nb_var);
-
-		printf("h_whitening = ");
-		for(j = 0 ; j < nb_var ; j++)
-			printf("%d", tGswDecryptB(h_state[j], TGSW_KEY));
-		printf("\n");
-
 		for(j = 0 ; j < nb_var ; j++)
 			tGswHomAdd(h_state[j], key[indice[j]], TGSW_PARAMS);
-
-		printf("h_state (after whitening) = ");
-		for(j = 0 ; j < nb_var ; j++)
-			printf("%d", tGswDecryptB(h_state[j], TGSW_KEY));
-		printf("\n");
-
 		deepcopy_tgsw(output[i], input[i]);
 		hom_filter(tmp, h_state);
-
-		printf("filter = %d\n", tGswDecryptB(tmp, TGSW_KEY));
-
 		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
-
-		printf("output = %d\n", tGswDecryptB(output[i], TGSW_KEY));
 	}
-	printf("\n");
 
 	free_tgsw_array(&h_state, nb_var);
 	free(indice);

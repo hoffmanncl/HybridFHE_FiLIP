@@ -33,7 +33,7 @@ int			main(int argc, char const *argv[])
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-10;
 
-	test_mul_noise(key, alpha, 1000);
+	test_mul_noise(key, alpha, 5000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -290,7 +290,7 @@ void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests)
 	for(i = 0 ; i < max_mul_depth + 2 ; i++)
 		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
 
-	printf("test_mul_noise - noise parameter = %f\n\n", alpha);
+	printf("test_mul_noise - noise parameter = %e - nb_tests = %d\n\n", alpha, nb_tests);
 	for(int i = 0 ; i < nb_tests ; i++)
 	{
 		tGswEncryptB(right_op, 1, alpha, key);
@@ -310,9 +310,9 @@ void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests)
 		noises[max_mul_depth + 1][i] = getTGswCipherNoise(right_op, key);
 	}
 	for(mul_depth = 0 ; mul_depth <= max_mul_depth ; mul_depth++)
-		printf("Mul by 1 = %d ; Var = %Le\n", mul_depth, get_r_variance(noises[mul_depth], nb_tests));
+		printf("After %d homomorphic multiplication(s) by Enc(1), var = %Le\n", mul_depth, get_r_variance(noises[mul_depth], nb_tests));
 	printf("\n");
-	printf("Mul by 0 ; Var = %Le\n", get_r_variance(noises[max_mul_depth + 1], nb_tests));
+	printf("After an homomorphic multiplication by Enc(0), var = %Le\n", get_r_variance(noises[max_mul_depth + 1], nb_tests));
 	
 
 	for(i = 0 ; i <= max_mul_depth + 1 ; i++)
