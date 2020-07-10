@@ -27,9 +27,10 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l]; // c is the first row of the last bloc
 	int32_t			result;
 
+	printf("Entering tGswDecryptB\n");
 	result = tLweSymDecryptT(c, &key->tlwe_key, 2);
 	result = modSwitchFromTorus32(result, 2);
-
+	printf("Exiting tGswDecryptB\n");
 	return result;
 }
 

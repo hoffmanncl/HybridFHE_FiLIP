@@ -63,7 +63,7 @@ void	hom_filter(TGswSample *result, TGswSample **h_state)
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
 		}
 	}
-	delete_TGswSample(tmp);
+	free_TGswSample(tmp);
 }
 
 
@@ -95,6 +95,7 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	}
 
 	free_tgsw_array(&h_state, nb_var);
+	free_TGswSample(tmp);
 	free(indice);
 }
 
@@ -127,7 +128,6 @@ void	fake_hom_filter(TGswSample *result, TGswSample **h_state)
 		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
 
 	for(i = 1 ; i < degree ; i++)
-	{
 		for(j = 0 ; j < mf[i] ; j++)
 		{
 			deepcopy_tgsw(tmp, h_state[nb++]);
@@ -135,8 +135,7 @@ void	fake_hom_filter(TGswSample *result, TGswSample **h_state)
 				fake_tGswHomMul(tmp, h_state[nb++], TGSW_KEY);
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
 		}
-	}
-	delete_TGswSample(tmp);
+	free_TGswSample(tmp);
 }
 
 
@@ -163,5 +162,6 @@ void	fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSam
 	}
 
 	free_tgsw_array(&h_state, nb_var);
+	free_TGswSample(tmp);
 	free(indice);
 }

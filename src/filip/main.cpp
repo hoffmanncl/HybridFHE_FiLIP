@@ -2,7 +2,7 @@
 #include	"include/tgsw_operations.h"
 
 
-TGswParams	*TGSW_PARAMS = new_TGswParams(16, 1, new_TLweParams(1024, 2, 0., 1.));
+TGswParams	*TGSW_PARAMS = new_TGswParams(16, 1, new_TLweParams(128, 2, 0., 1.));
 TGswKey		*TGSW_KEY = new_random_key(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
@@ -21,7 +21,7 @@ int		main(int argc, char const *argv[])
 	init_globals();
 
 	long		*key, *message, *cipher;
-	int			k_size = 100, m_size = 5, i;
+	int			k_size = 16384, m_size = 5, i;
 	TGswSample	**h_key, **h_message, **h_cipher;
 
 	key = (long*)malloc(sizeof(long) * k_size);
@@ -63,15 +63,26 @@ int		main(int argc, char const *argv[])
 
 void	init_globals()
 {
-	double	alpha = 1e-14;
+	double	alpha = 1e-4;
+	int		i;
 
-	for(int i = 0 ; i < degree ; i++)
+	/*for(i = 0 ; i < degree ; i++)
+		mf[i] = 0;
+	mf[0] = 128;
+	mf[1] = 64;
+	mf[3] = 80;
+	mf[7] = 80;
+	for(i = 0 ; i < degree ; i++)
+		nb_var += (i + 1) * mf[i];*/
+	for(i = 0 ; i < degree ; i++)
 	{
 		mf[i] = 2;
-		nb_var += (i + 1) * mf[i];
+		nb_var += (i+1) * mf[i];
 	}
+	printf("%d\n", nb_var);
 	tGswEncryptB(CIPHER_OF_ZERO, 0, alpha, TGSW_KEY);
 	tGswEncryptB(CIPHER_OF_ONE, 1, alpha, TGSW_KEY);
+
 	fake_tGswEncrypt(FAKE_CIPHER_OF_ZERO, 0);
 	fake_tGswEncrypt(FAKE_CIPHER_OF_ONE, 1);
 }
@@ -89,7 +100,7 @@ void	allocate_tgsw_array(TGswSample ***array, int size)
 void	free_tgsw_array(TGswSample ***array, int size)
 {
 	for(int i = 0 ; i < size ; i++)
-		delete_TGswSample((*array)[i]);
+		free_TGswSample((*array)[i]);
 	free(*array);
 }
 

@@ -29,11 +29,15 @@ long double	get_r_average(long double *noises, int32_t size);
 int			main(int argc, char const *argv[])
 {
 	srand(time(NULL));
-	TGswParams	*params = new_TGswParams(16, 1, new_TLweParams(1024, 2, 0., 1.));	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max (alpha_min = noise, alpha_max = decryption threshold)
+	TGswParams *params = new_TGswParams(16, 1, new_TLweParams(128, 1, 0., 1.));
+	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max
 	TGswKey		*key = new_random_key(params);
-	double		alpha = 1e-10;
+	double		alpha = 1e-4;
 
-	test_mul_noise(key, alpha, 5000);
+	/*if(test_hom_mul(key, alpha, 100))
+		printf("Yay\n");*/
+	TGswSample	*s = new_TGswSample(params);
+	printf("Size of a tgsw sample : %ld\n", sizeof(*s));
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -47,14 +51,18 @@ int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_te
 	int32_t		success_count;
 	int			ret = 1;
 
+	printf("k = %d ; N = %d ; l = %d\n", cipher->k, cipher->all_sample->a->N, cipher->l);
 	for(int m = 0 ; m < 2 ; m++)
 	{
 		success_count = 0;
 		for(int i = 0 ; i < nb_tests ; i++)
 		{
+			printf("Beginning of encryption\n\n");
 			tGswEncryptB(cipher, m, alpha, key);
+			printf("End of encryption\n\n\nBeginning of decryption\n\n");
 			if(m == tGswDecryptB(cipher, key))
 				success_count++;
+			printf("End of decryption\n");
 		}
 		//printf("Message = %d : Among %d tests, %d successful\n\n", m, nb_tests, success_count);
 		if(success_count < nb_tests)
