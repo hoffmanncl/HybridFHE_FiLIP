@@ -17,7 +17,7 @@ TGswKey	*new_random_key(const TGswParams *params)
 void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const TGswKey *key)
 {
     tGswEncryptZero(result, alpha, key);
-    if (message == 1)
+    if(message == 1)
         tGswAddH(result, key->params);
 }
 
@@ -27,10 +27,8 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l]; // c is the first row of the last bloc
 	int32_t			result;
 
-	printf("Entering tGswDecryptB\n");
 	result = tLweSymDecryptT(c, &key->tlwe_key, 2);
 	result = modSwitchFromTorus32(result, 2);
-	printf("Exiting tGswDecryptB\n");
 	return result;
 }
 
@@ -59,6 +57,14 @@ void	tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *
 
 	for(int32_t i = 0 ; i < d ; i++)
 		tLweAddTo(&result->all_sample[i], &sample->all_sample[i], tlwe_params);
+}
+
+
+// result = result ^ message
+void	tGswHomAddMu(TGswSample *result, int32_t message, const TGswParams *params)
+{
+	if(message == 1)
+		tGswAddH(result, params);
 }
 
 

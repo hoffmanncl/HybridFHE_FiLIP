@@ -21,6 +21,7 @@ void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const
 int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key);
 Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key);
 void	tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *params);
+void	tGswHomAddMu(TGswSample *result, int32_t m, const TGswParams *params);
 void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params);
 
 void	fake_tGswEncrypt(TGswSample *result, int32_t message);

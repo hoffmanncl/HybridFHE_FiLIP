@@ -45,10 +45,6 @@ void	hom_filter(TGswSample *result, TGswSample **h_state)
 	int			i, j, k;
 	int			nb = 0;
 
-	for(i = 0 ; i < nb_var ; i++)
-		printf("%d", tGswDecryptB(h_state[i], TGSW_KEY));
-	printf("\n");
-
 	deepcopy_tgsw(result, CIPHER_OF_ZERO);
 	for(i = 0 ; i < mf[0] ; i++)
 		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
@@ -75,10 +71,6 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	int			i, j;
 
 	allocate_tgsw_array(&h_state, nb_var);
-
-	for(i = 0 ; i < m_size ; i++)
-		printf("%d", tGswDecryptB(input[i], TGSW_KEY));
-	printf("\n");
 
 	for(i = 0 ; i < k_size ; i++)
 		indice[i] = i;

@@ -10,14 +10,17 @@
 
 int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_tGswHomAddMu(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
 void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests);
-void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_sum_noise(const TGswKey *key, double alpha, int32_t nb_tests);
+void		verify_filip_term_variance(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests);
 
 int32_t		get_variance(int32_t *data, int size);
@@ -34,10 +37,7 @@ int			main(int argc, char const *argv[])
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-4;
 
-	/*if(test_hom_mul(key, alpha, 100))
-		printf("Yay\n");*/
-	TGswSample	*s = new_TGswSample(params);
-	printf("Size of a tgsw sample : %ld\n", sizeof(*s));
+	test_sum_noise(key, alpha, 10000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -47,27 +47,26 @@ int			main(int argc, char const *argv[])
 
 int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
 {
+	printf("test_encryption_decryption - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
 	TGswSample	*cipher = new_TGswSample(key->params);
 	int32_t		success_count;
 	int			ret = 1;
 
-	printf("k = %d ; N = %d ; l = %d\n", cipher->k, cipher->all_sample->a->N, cipher->l);
 	for(int m = 0 ; m < 2 ; m++)
 	{
 		success_count = 0;
 		for(int i = 0 ; i < nb_tests ; i++)
 		{
-			printf("Beginning of encryption\n\n");
 			tGswEncryptB(cipher, m, alpha, key);
-			printf("End of encryption\n\n\nBeginning of decryption\n\n");
 			if(m == tGswDecryptB(cipher, key))
 				success_count++;
-			printf("End of decryption\n");
 		}
-		//printf("Message = %d : Among %d tests, %d successful\n\n", m, nb_tests, success_count);
+		printf("m = %d - Among %d tests, %d successful\n", m, nb_tests, success_count);
 		if(success_count < nb_tests)
 			ret = 0;
 	}
+	printf("\n");
 	delete_TGswSample(cipher);
 	return ret;
 }
@@ -99,6 +98,29 @@ int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
 	delete_TGswSample(cipher_1);
 	delete_TGswSample(cipher_2);
 	return ret;
+}
+
+
+void		test_tGswHomAddMu(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	printf("test_tGswHomAddMu - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
+	TGswSample	*cipher = new_TGswSample(key->params);
+	int32_t		cnt;
+
+	for(int m1 = 0 ; m1 < 2 ; m1++)
+		for(int m2 = 0 ; m2 < 2 ; m2++)
+		{
+			cnt = 0;
+			for(int i = 0 ; i < nb_tests ; i++)
+			{
+				tGswEncryptB(cipher, m1, alpha, key);
+				tGswHomAddMu(cipher, m2, key->params);
+				if(m1^m2 == tGswDecryptB(cipher, key))
+					cnt++;
+			}
+			printf("m1 = %d ; m2 = %d - Among %d tests, %d successful\n", m1, m2, nb_tests, cnt);
+		}
 }
 
 
@@ -401,6 +423,60 @@ void		test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests)
 			printf("m1 = %d ; m2 = %d - %d successful tests among %d\n", m1, m2, cnt, nb_tests);
 		}
 }
+
+
+void		test_sum_noise(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	printf("test_sum_noise - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
+	int32_t		**noises = (int32_t**)malloc(sizeof(int32_t*) * 2);
+	TGswSample	*left_op = new_TGswSample(key->params);
+	TGswSample	*right_op = new_TGswSample(key->params);
+	int32_t		i, nb_add = 100;
+
+	for(i = 0 ; i < 3 ; i++)
+		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+	for(i = 0 ; i < nb_tests ; i++)
+	{
+		tGswEncryptB(left_op, 0, alpha, key);
+		noises[0][i] = getTGswCipherNoise(left_op, key);
+		for(int a = 0 ; a < nb_add ; a++)
+		{
+			tGswEncryptB(right_op, 0, alpha, key);
+			tGswHomAdd(left_op, right_op, key->params);
+		}
+		noises[1][i] = getTGswCipherNoise(left_op, key);
+	}
+	printf("Fresh ciphers var = %Le\nAfter %d additions, var = %Le\n", get_r_variance(noises[0], nb_tests), nb_add, get_r_variance(noises[1], nb_tests));
+
+	for(i = 0 ; i < 3 ; i++)
+		free(noises[i]);
+	free(noises);
+	free_TGswSample(left_op);
+	free_TGswSample(right_op);
+}
+
+
+void		verify_filip_term_variance(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	printf("verify_filip_term_variance - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
+	int32_t		**noises = (int32_t**)malloc(sizeof(int32_t*) * 2); // noises[0] = after 8 mul ; noises[1] = after sum
+	TGswSample	*right_op = new_TGswSample(key->params);
+	TGswSample	*left_op = new_TGswSample(key->params);
+	int32_t		i;
+
+	for(i = 0 ; i < 2 ; i++)
+		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
+
+
+	for(i = 0 ; i < 2 ; i++)
+		free(noises[i]);
+	free(noises);
+	free_TGswSample(left_op);
+	free_TGswSample(right_op);
+}
+
 
 
 int32_t		get_variance(int32_t *data, int size)
