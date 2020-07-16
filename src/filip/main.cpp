@@ -2,7 +2,7 @@
 #include	"include/tgsw_operations.h"
 
 
-TGswParams	*TGSW_PARAMS = new_TGswParams(16, 1, new_TLweParams(128, 2, 0., 1.));
+TGswParams	*TGSW_PARAMS = new_TGswParams(32, 1, new_TLweParams(256, 2, 0., 1.));
 TGswKey		*TGSW_KEY = new_random_key(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
 TGswSample	*CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
@@ -21,8 +21,9 @@ int		main(int argc, char const *argv[])
 	init_globals();
 
 	long		*key, *message, *cipher;
-	int			k_size = 16384, m_size = 5, i;
+	int			k_size = 16384, m_size = 1000, i;
 	TGswSample	**h_key, **h_message, **h_cipher;
+	int32_t		*noises = (int*)malloc(sizeof(int) * m_size);
 
 	key = (long*)malloc(sizeof(long) * k_size);
 	message = (long*)malloc(sizeof(long) * m_size);
@@ -44,6 +45,11 @@ int		main(int argc, char const *argv[])
 	hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
 
 	for(i = 0 ; i < m_size ; i++)
+		noises[i] = getTGswCipherNoise(h_cipher[i], TGSW_KEY);
+
+	printf("FiLIP cipher error variance  = %Le\n", get_variance(noises, m_size));
+
+	for(i = 0 ; i < m_size ; i++)
 		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
 			break;
 	if(i == m_size)
@@ -51,6 +57,7 @@ int		main(int argc, char const *argv[])
 	else
 		printf(":c %d\n", i);
 
+	free(noises);
 	free(key);
 	free(message);
 	free(cipher);
@@ -63,7 +70,7 @@ int		main(int argc, char const *argv[])
 
 void	init_globals()
 {
-	double	alpha = 1e-4;
+	double	alpha = 1e-6;
 	int		i;
 
 	for(i = 0 ; i < degree ; i++)

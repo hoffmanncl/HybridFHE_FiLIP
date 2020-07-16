@@ -14,8 +14,8 @@ void		test_tGswHomAddMu(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests);
-void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
-void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
+//void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
+//void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_tests);
 void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests);
@@ -23,10 +23,6 @@ void		test_sum_noise(const TGswKey *key, double alpha, int32_t nb_tests);
 void		verify_filip_term_variance(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_fake_tGsw(const TGswKey *key, double alpha, int32_t nb_tests);
 
-int32_t		get_variance(int32_t *data, int size);
-int32_t		get_average(int32_t *data, int size);
-long double	get_r_variance(int32_t *noises, int32_t size);
-long double	get_r_average(long double *noises, int32_t size);
 
 
 int			main(int argc, char const *argv[])
@@ -37,7 +33,7 @@ int			main(int argc, char const *argv[])
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-4;
 
-	test_sum_noise(key, alpha, 10000);
+	test_sum_noise(key, alpha, 1000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -223,7 +219,7 @@ void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_te
 }
 
 
-void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests)
+/*void		test_max_depth_cst_cipher(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	TGswSample	*cipher1 = new_TGswSample(key->params);
 	TGswSample	*cipher2 = new_TGswSample(key->params);
@@ -273,7 +269,7 @@ void		test_max_depth_random_cipher(const TGswKey *key, double alpha, int32_t nb_
 			min_max_depth = max_depth;
 	}
 	printf("min_max_depth = %2d ; average max_depth = %2d\n", min_max_depth, get_average(max_depths, nb_tests));
-}
+}*/
 
 
 void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests)
@@ -302,7 +298,7 @@ void		verify_variance_formula(const TGswKey *key, double alpha, int32_t nb_tests
 		}
 	}
 	for(i = 0 ; i <= max_depth ; i++)
-		printf("depth = %d ; var = %Le\n", i, get_r_variance(noises[i], nb_tests));
+		printf("depth = %d ; var = %Le\n", i, get_variance(noises[i], nb_tests));
 	
 	for(i = 0 ; i <= max_depth ; i++)
 		free(noises[i]);
@@ -340,9 +336,9 @@ void		test_mul_noise(const TGswKey *key, double alpha, int32_t nb_tests)
 		noises[max_mul_depth + 1][i] = getTGswCipherNoise(right_op, key);
 	}
 	for(mul_depth = 0 ; mul_depth <= max_mul_depth ; mul_depth++)
-		printf("After %d homomorphic multiplication(s) by Enc(1), var = %Le\n", mul_depth, get_r_variance(noises[mul_depth], nb_tests));
+		printf("After %d homomorphic multiplication(s) by Enc(1), var = %Le\n", mul_depth, get_variance(noises[mul_depth], nb_tests));
 	printf("\n");
-	printf("After an homomorphic multiplication by Enc(0), var = %Le\n", get_r_variance(noises[max_mul_depth + 1], nb_tests));
+	printf("After an homomorphic multiplication by Enc(0), var = %Le\n", get_variance(noises[max_mul_depth + 1], nb_tests));
 	
 
 	for(i = 0 ; i <= max_mul_depth + 1 ; i++)
@@ -364,7 +360,7 @@ void		test_fresh_ciphers_variance(const TGswKey *key, double alpha, int32_t nb_t
 			tGswEncryptB(cipher, m, alpha, key);
 			noises[i] = getTGswCipherNoise(cipher, key);
 		}
-		printf("Enc(%d) - var = %Le\n", m, get_r_variance(noises, nb_tests));
+		printf("Enc(%d) - var = %Le\n", m, get_variance(noises, nb_tests));
 	}
 	printf("\n");
 	free(noises);
@@ -438,16 +434,16 @@ void		test_sum_noise(const TGswKey *key, double alpha, int32_t nb_tests)
 		noises[i] = (int32_t*)malloc(sizeof(int32_t) * nb_tests);
 	for(i = 0 ; i < nb_tests ; i++)
 	{
-		tGswEncryptB(left_op, 0, alpha, key);
+		tGswEncryptB(left_op, 1, alpha, key);
 		noises[0][i] = getTGswCipherNoise(left_op, key);
 		for(int a = 0 ; a < nb_add ; a++)
 		{
-			tGswEncryptB(right_op, 0, alpha, key);
+			tGswEncryptB(right_op, 1, alpha, key);
 			tGswHomAdd(left_op, right_op, key->params);
 		}
 		noises[1][i] = getTGswCipherNoise(left_op, key);
 	}
-	printf("Fresh ciphers var = %Le\nAfter %d additions, var = %Le\n", get_r_variance(noises[0], nb_tests), nb_add, get_r_variance(noises[1], nb_tests));
+	printf("Fresh ciphers var = %Le\nAfter %d additions, var = %Le\n", get_variance(noises[0], nb_tests), nb_add, get_variance(noises[1], nb_tests));
 
 	for(i = 0 ; i < 3 ; i++)
 		free(noises[i]);
@@ -475,54 +471,4 @@ void		verify_filip_term_variance(const TGswKey *key, double alpha, int32_t nb_te
 	free(noises);
 	free_TGswSample(left_op);
 	free_TGswSample(right_op);
-}
-
-
-
-int32_t		get_variance(int32_t *data, int size)
-{
-	long double	var = 0;
-	int32_t		avr = get_average(data, size);
-
-	for(int i = 0 ; i < size ; i++)
-		var = (i * var + (data[i] - avr) * (data[i] - avr)) / (i + 1);
-	return (int32_t)var;
-}
-
-
-int32_t		get_average(int32_t *data, int size)
-{
-	long double	avr = 0.;
-
-	for(int i = 0 ; i < size ; i++)
-		avr = (i * avr + data[i]) / (i + 1);
-	return (int32_t)avr;
-}
-
-
-long double	get_r_variance(int32_t *noises, int32_t size)
-{
-	long double	avr, var = 0;
-	long double *r_noises = (long double*)malloc(sizeof(long double) * size);
-	int32_t		i;
-
-	for(i = 0 ; i < size ; i++)
-		r_noises[i] = (long double)noises[i] / ((long long unsigned int)1<<32);
-
-	avr = get_r_average(r_noises, size);
-	for(int i = 0 ; i < size ; i++)
-		var = (i * var + (r_noises[i] - avr) * (r_noises[i] - avr)) / (i + 1);
-
-	free(r_noises);
-	return var;
-}
-
-
-long double	get_r_average(long double *noises, int32_t size)
-{
-	long double	avr = 0;
-
-	for(int i = 0 ; i < size ; i++)
-		avr = (i * avr + noises[i]) / (i + 1);
-	return avr;
 }

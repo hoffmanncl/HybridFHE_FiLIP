@@ -79,6 +79,34 @@ void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *
 }
 
 
+long double	get_variance(int32_t *noises, int32_t size)
+{
+	long double	avr, var = 0;
+	long double *r_noises = (long double*)malloc(sizeof(long double) * size);
+	int32_t		i;
+
+	for(i = 0 ; i < size ; i++)
+		r_noises[i] = (long double)noises[i] / ((long long unsigned int)1<<32);
+
+	avr = get_average(r_noises, size);
+	for(int i = 0 ; i < size ; i++)
+		var = (i * var + (r_noises[i] - avr) * (r_noises[i] - avr)) / (i + 1);
+
+	free(r_noises);
+	return var;
+}
+
+
+long double	get_average(long double *noises, int32_t size)
+{
+	long double	avr = 0;
+
+	for(int i = 0 ; i < size ; i++)
+		avr = (i * avr + noises[i]) / (i + 1);
+	return avr;
+}
+
+
 void	fake_tGswEncrypt(TGswSample *result, int32_t message)
 {
 	int32_t	k = result->k;
