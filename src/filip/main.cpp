@@ -38,6 +38,7 @@ int		main(int argc, char const *argv[])
 	cipher = (long*)malloc(sizeof(long) * m_size);
 
 	new_random_binary_sequence(key, k_size);
+	new_random_binary_sequence(message, m_size);
 	init_tgsw_sets(variables_sets, nb_sets);
 	for(int s = 0 ; s < nb_sets ; s++)
 	{
@@ -45,7 +46,6 @@ int		main(int argc, char const *argv[])
 		display_tgsw_set(variables_sets + s);
 		for(i = 0 ; i < k_size ; i++)
 			deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-		new_random_binary_sequence(message, m_size);
 		for(i = 0 ; i < m_size ; i++)
 			deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
 
@@ -67,16 +67,14 @@ int		main(int argc, char const *argv[])
 				break;
 		if(i != m_size)
 			printf("Error in FiLIP homomorphic evaluation :x\n");
+
+		free_tgsw(&h_key, &h_message, &h_cipher, k_size, m_size);
 	}
 
-	free_tgsw();
 	free(noises);
 	free(key);
 	free(message);
 	free(cipher);
-	free_tgsw_array(&h_key, nb_var);
-	free_tgsw_array(&h_message, m_size);
-	free_tgsw_array(&h_cipher, m_size);
 	return 0;
 }
 
@@ -125,15 +123,19 @@ void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TG
 }
 
 
-void	free_tgsw()
+void	free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
 {
-	free_TGswParams(TGSW_PARAMS);
-	free_TGswKey(TGSW_KEY);
-	free_TGswSample(CIPHER_OF_ZERO);
-	free_TGswSample(CIPHER_OF_ONE);
+	delete_TGswParams(TGSW_PARAMS);
+	delete_TGswKey(TGSW_KEY);
+	delete_TGswSample(CIPHER_OF_ZERO);
+	delete_TGswSample(CIPHER_OF_ONE);
 
-	free_TGswSample(FAKE_CIPHER_OF_ZERO);
-	free_TGswSample(FAKE_CIPHER_OF_ONE);
+	free_tgsw_array(h_key, k_size);
+	free_tgsw_array(h_message, m_size);
+	free_tgsw_array(h_cipher, m_size);
+
+	delete_TGswSample(FAKE_CIPHER_OF_ZERO);
+	delete_TGswSample(FAKE_CIPHER_OF_ONE);
 }
 
 
@@ -148,7 +150,7 @@ void	allocate_tgsw_array(TGswSample ***array, int size)
 void	free_tgsw_array(TGswSample ***array, int size)
 {
 	for(int i = 0 ; i < size ; i++)
-		free_TGswSample((*array)[i]);
+		delete_TGswSample((*array)[i]);
 	free(*array);
 }
 
@@ -166,10 +168,10 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 	sets->l = 32;
 	sets->alpha = 1e-6;
 
-/*	(sets + 1)->k = 2;
-	(sets + 1)->N = 256;
-	(sets + 1)->l = 32;
-	(sets + 1)->alpha = 1e-6;
+	/*(sets + 1)->k = 1;
+	(sets + 1)->N = 512;
+	(sets + 1)->l = 64;
+	(sets + 1)->alpha = 1e-4;
 
 	(sets + 2)->k = 2;
 	(sets + 2)->N = 256;
@@ -178,8 +180,8 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 
 	(sets + 3)->k = 2;
 	(sets + 3)->N = 256;
-	(sets + 3)->l = 32;
-	(sets + 3)->alpha = 1e-6;*/
+	(sets + 3)->l = 64;
+	(sets + 3)->alpha = 1e-4;*/
 }
 
 

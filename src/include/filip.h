@@ -87,7 +87,7 @@ void		fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSa
 
 void		init_filter();
 void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
-void		free_tgsw();
+void		free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		allocate_tgsw_array(TGswSample ***array, int size);
 void		free_tgsw_array(TGswSample ***array, int size);
 void		display_tgsw_set(tgsw_vars *vars);
