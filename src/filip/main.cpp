@@ -2,61 +2,74 @@
 #include	"include/tgsw_operations.h"
 
 
-TGswParams	*TGSW_PARAMS = new_TGswParams(32, 1, new_TLweParams(256, 2, 0., 1.));
-TGswKey		*TGSW_KEY = new_random_key(TGSW_PARAMS);
-TGswSample	*CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
-TGswSample	*CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
-int			degree = 8;
-long		*mf = (long*)malloc(sizeof(long) * degree);
-int			nb_var = 0;
+TGswParams	*TGSW_PARAMS;
+TGswKey		*TGSW_KEY;
+TGswSample	*CIPHER_OF_ZERO;
+TGswSample	*CIPHER_OF_ONE;
+int			degree;
+long		*mf;
+int			nb_var;
 
-TGswSample	*FAKE_CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
-TGswSample	*FAKE_CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
+TGswSample	*FAKE_CIPHER_OF_ZERO;
+TGswSample	*FAKE_CIPHER_OF_ONE;
 
 
 
 
 int		main(int argc, char const *argv[])
 {
-	init_globals();
+	init_filter();
 
 	long		*key, *message, *cipher;
-	int			k_size = 16384, m_size = 1000, i;
+	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
 	TGswSample	**h_key, **h_message, **h_cipher;
+
 	int32_t		*noises = (int*)malloc(sizeof(int) * m_size);
+	clock_t		inter;
+	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * nb_sets);
+
+	printf("\nm_size = %d ; k_size = %d ; mf = [", m_size, k_size);
+	for(i = 0 ; i < degree - 1 ; i++)
+		printf("%ld, ", mf[i]);
+	printf("%ld]\n\n\n", mf[degree - 1]);
 
 	key = (long*)malloc(sizeof(long) * k_size);
 	message = (long*)malloc(sizeof(long) * m_size);
 	cipher = (long*)malloc(sizeof(long) * m_size);
-	allocate_tgsw_array(&h_key, k_size);
-	allocate_tgsw_array(&h_message, m_size);
-	allocate_tgsw_array(&h_cipher, m_size);
 
 	new_random_binary_sequence(key, k_size);
-	for(int i = 0 ; i < k_size ; i++)
-		deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-	new_random_binary_sequence(message, m_size);
-	for(int i = 0 ; i < m_size ; i++)
-		deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+	init_tgsw_sets(variables_sets, nb_sets);
+	for(int s = 0 ; s < nb_sets ; s++)
+	{
+		init_tgsw(variables_sets + s, &h_key, &h_message, &h_cipher, k_size, m_size);
+		display_tgsw_set(variables_sets + s);
+		for(i = 0 ; i < k_size ; i++)
+			deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+		new_random_binary_sequence(message, m_size);
+		for(i = 0 ; i < m_size ; i++)
+			deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
 
-	reset_prng();
-	FiLIP(cipher, message, m_size, key, k_size);
-	reset_prng();
-	hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+		reset_prng();
+		FiLIP(cipher, message, m_size, key, k_size);
+		reset_prng();
+		inter = clock();
+		hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+		inter = clock() - inter;
 
-	for(i = 0 ; i < m_size ; i++)
-		noises[i] = getTGswCipherNoise(h_cipher[i], TGSW_KEY);
+		for(i = 0 ; i < m_size ; i++)
+			noises[i] = getTGswCipherNoise(h_cipher[i], TGSW_KEY);
 
-	printf("FiLIP cipher error variance  = %Le\n", get_variance(noises, m_size));
+		printf("FiLIP homomorphic encryption time = %.2f\n", (double)inter / (CLOCKS_PER_SEC * m_size));
+		printf("FiLIP cipher error variance  = %Le\n\n\n", get_variance(noises, m_size));
 
-	for(i = 0 ; i < m_size ; i++)
-		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
-			break;
-	if(i == m_size)
-		printf("Yay\n");
-	else
-		printf(":c %d\n", i);
+		for(i = 0 ; i < m_size ; i++)
+			if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
+				break;
+		if(i != m_size)
+			printf("Error in FiLIP homomorphic evaluation :x\n");
+	}
 
+	free_tgsw();
 	free(noises);
 	free(key);
 	free(message);
@@ -68,10 +81,13 @@ int		main(int argc, char const *argv[])
 }
 
 
-void	init_globals()
+void	init_filter()
 {
-	double	alpha = 1e-6;
 	int		i;
+
+	degree = 8;
+	mf = (long*)malloc(sizeof(long) * degree);
+	nb_var = 0;
 
 	for(i = 0 ; i < degree ; i++)
 		mf[i] = 0;
@@ -86,13 +102,39 @@ void	init_globals()
 		mf[i] = 2;
 		nb_var += (i+1) * mf[i];
 	}*/
-	tGswEncryptB(CIPHER_OF_ZERO, 0, alpha, TGSW_KEY);
-	tGswEncryptB(CIPHER_OF_ONE, 1, alpha, TGSW_KEY);
+}
 
+
+void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
+{
+	TGSW_PARAMS = new_TGswParams(vars->l, 1, new_TLweParams(vars->N, vars->k, 0., 1.));
+	TGSW_KEY = new_random_key(TGSW_PARAMS);
+	CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
+	CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
+	tGswEncryptB(CIPHER_OF_ZERO, 0, vars->alpha, TGSW_KEY);
+	tGswEncryptB(CIPHER_OF_ONE, 1, vars->alpha, TGSW_KEY);
+
+	allocate_tgsw_array(h_key, k_size);
+	allocate_tgsw_array(h_message, m_size);
+	allocate_tgsw_array(h_cipher, m_size);
+
+	FAKE_CIPHER_OF_ZERO = new_TGswSample(TGSW_PARAMS);
+	FAKE_CIPHER_OF_ONE = new_TGswSample(TGSW_PARAMS);
 	fake_tGswEncrypt(FAKE_CIPHER_OF_ZERO, 0);
 	fake_tGswEncrypt(FAKE_CIPHER_OF_ONE, 1);
 }
 
+
+void	free_tgsw()
+{
+	free_TGswParams(TGSW_PARAMS);
+	free_TGswKey(TGSW_KEY);
+	free_TGswSample(CIPHER_OF_ZERO);
+	free_TGswSample(CIPHER_OF_ONE);
+
+	free_TGswSample(FAKE_CIPHER_OF_ZERO);
+	free_TGswSample(FAKE_CIPHER_OF_ONE);
+}
 
 
 void	allocate_tgsw_array(TGswSample ***array, int size)
@@ -110,6 +152,97 @@ void	free_tgsw_array(TGswSample ***array, int size)
 	free(*array);
 }
 
+
+void	display_tgsw_set(tgsw_vars *vars)
+{
+	printf("Tgsw parameters : k = %d ; N = %d ; l = %d ; alpha = %e\n\n", vars->k, vars->N, vars->l, vars->alpha);
+}
+
+
+void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
+{
+	sets->k = 1;
+	sets->N = 512;
+	sets->l = 32;
+	sets->alpha = 1e-6;
+
+/*	(sets + 1)->k = 2;
+	(sets + 1)->N = 256;
+	(sets + 1)->l = 32;
+	(sets + 1)->alpha = 1e-6;
+
+	(sets + 2)->k = 2;
+	(sets + 2)->N = 256;
+	(sets + 2)->l = 32;
+	(sets + 2)->alpha = 1e-6;
+
+	(sets + 3)->k = 2;
+	(sets + 3)->N = 256;
+	(sets + 3)->l = 32;
+	(sets + 3)->alpha = 1e-6;*/
+}
+
+
+
+/*BENCH HOM_FILIP
+	init_filter();
+
+	long		*key, *message, *cipher;
+	int			k_size = 16384, m_size = 1000, i, nb_sets = 4;
+	TGswSample	**h_key, **h_message, **h_cipher;
+
+	int32_t		*noises = (int*)malloc(sizeof(int) * m_size);
+	clock_t		inter;
+	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * nb_sets);
+
+	key = (long*)malloc(sizeof(long) * k_size);
+	message = (long*)malloc(sizeof(long) * m_size);
+	cipher = (long*)malloc(sizeof(long) * m_size);
+	allocate_tgsw_array(&h_key, k_size);
+	allocate_tgsw_array(&h_message, m_size);
+	allocate_tgsw_array(&h_cipher, m_size);
+	new_random_binary_sequence(key, k_size);
+
+	init_tgsw_sets(variables_sets, nb_sets);
+	for(int s = 0 ; s < nb_sets ; s++)
+	{
+		init_tgsw(variables_sets + s);
+		for(i = 0 ; i < k_size ; i++)
+			deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+		new_random_binary_sequence(message, m_size);
+		for(i = 0 ; i < m_size ; i++)
+			deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
+
+		reset_prng();
+		FiLIP(cipher, message, m_size, key, k_size);
+		reset_prng();
+		inter = clock();
+		hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+		inter = clock() - inter;
+
+		for(i = 0 ; i < m_size ; i++)
+			noises[i] = getTGswCipherNoise(h_cipher[i], TGSW_KEY);
+
+		printf("FiLIP homomorphic encryption time = %e\n", (double)inter / (CLOCKS_PER_SEC * m_size));
+		printf("FiLIP cipher error variance  = %Le\n\n\n", get_variance(noises, m_size));
+
+		for(i = 0 ; i < m_size ; i++)
+			if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
+				break;
+		if(i != m_size)
+			printf("Error in FiLIP homomorphic evaluation :x\n");
+	}
+
+	free_tgsw();
+	free(noises);
+	free(key);
+	free(message);
+	free(cipher);
+	free_tgsw_array(&h_key, nb_var);
+	free_tgsw_array(&h_message, m_size);
+	free_tgsw_array(&h_cipher, m_size);
+	return 0;
+*/
 
 
 /*TEST FAKE_HOM_FILIP

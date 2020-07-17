@@ -24,7 +24,7 @@ void	deepcopy_torus_polynomial(TorusPolynomial *copy, TorusPolynomial *poly)
 }
 
 
-void	set_hom_whitening(TGswSample **h_whitening, int len)
+/*void	set_hom_whitening(TGswSample **h_whitening, int len)
 {
 	long	random;
 	int		ctr = 0;
@@ -36,7 +36,7 @@ void	set_hom_whitening(TGswSample **h_whitening, int len)
 		deepcopy_tgsw(h_whitening[ctr], (random >> (ctr % 32)) & 1 ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
 		ctr++;
 	}
-}
+}*/
 
 
 void	hom_filter(TGswSample *result, TGswSample **h_state)
@@ -68,6 +68,7 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	TGswSample	**h_state;
 	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
 	long		*indice = (long*)malloc(sizeof(long) * k_size);
+	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
 	int			i, j;
 
 	allocate_tgsw_array(&h_state, nb_var);
@@ -78,9 +79,12 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	for(i = 0 ; i < m_size ; i++)
 	{
 		shuffle(indice, k_size);
-		set_hom_whitening(h_state, nb_var);
+		set_whitening(whitening, nb_var);
 		for(j = 0 ; j < nb_var ; j++)
-			tGswHomAdd(h_state[j], key[indice[j]], TGSW_PARAMS);
+		{
+			deepcopy_tgsw(h_state[j], key[indice[j]]);
+			tGswHomAddMu(h_state[j], whitening[j], TGSW_PARAMS);
+		}
 		deepcopy_tgsw(output[i], input[i]);
 		hom_filter(tmp, h_state);
 		tGswHomAdd(output[i], tmp, TGSW_PARAMS);

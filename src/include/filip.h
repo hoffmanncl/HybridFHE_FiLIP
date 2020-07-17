@@ -36,6 +36,16 @@ extern TGswSample	*FAKE_CIPHER_OF_ONE;
 
 
 
+typedef struct	tgsw_vars
+{
+	int32_t	k;
+	int32_t	N;
+	int32_t	l;
+	double	alpha;
+}				tgsw_vars;
+
+
+
 // aes.c
 
 void		KeyExpansion(uchar key[], uint w[], int keysize);
@@ -75,9 +85,15 @@ void		fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSa
 
 // main.cpp
 
-void		init_globals();
+void		init_filter();
+void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
+void		free_tgsw();
 void		allocate_tgsw_array(TGswSample ***array, int size);
 void		free_tgsw_array(TGswSample ***array, int size);
+void		display_tgsw_set(tgsw_vars *vars);
+
+void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
+
 
 
 #endif
