@@ -81,6 +81,8 @@ void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample 
 void		fake_set_hom_whitening(TGswSample **h_whitening, int len);
 void		fake_hom_filter(TGswSample *result, TGswSample **h_state);
 void		fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
+void	hom_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
+void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises);
 
 
 // main.cpp
