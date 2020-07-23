@@ -1,4 +1,4 @@
-#include	"include/filip.h"
+ #include	"include/filip.h"
 #include	"include/tgsw_operations.h"
 
 
@@ -20,14 +20,14 @@ int		main(int argc, char const *argv[])
 	init_filter();
 
 	long		*key, *message, *cipher;
-	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
+	int			k_size = 16384, m_size = 500, i, nb_sets = 1;
 	TGswSample	**h_key, **h_message, **h_cipher;
 
-	int32_t		**noises = (int**)malloc(sizeof(int*) * 10);
+	int32_t		**noises = (int**)malloc(sizeof(int*) * 18);
 	clock_t		inter;
 	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * nb_sets);
 
-	for(i = 0 ; i < 10 ; i++)
+	for(i = 0 ; i < 18 ; i++)
 		noises[i] = (int*)malloc(sizeof(int) * m_size);
 	printf("\nm_size = %d ; k_size = %d ; mf = [", m_size, k_size);
 	for(i = 0 ; i < degree - 1 ; i++)
@@ -62,7 +62,7 @@ int		main(int argc, char const *argv[])
 
 		printf("FiLIP homomorphic encryption time = %.2f\n", (double)inter / (CLOCKS_PER_SEC * m_size));
 		printf("Variances :\n\n");
-		for(i = 0 ; i < 10 ; i++)
+		for(i = 0 ; i < 17 ; i++)
 			printf("%d : %Le\n", i, get_variance(noises[i], m_size));
 
 		for(i = 0 ; i < m_size ; i++)
@@ -74,7 +74,7 @@ int		main(int argc, char const *argv[])
 		free_tgsw(&h_key, &h_message, &h_cipher, k_size, m_size);
 	}
 
-	for(i = 0 ; i < 10 ; i++)
+	for(i = 0 ; i < 18 ; i++)
 		free(noises[i]);
 	free(noises);
 	free(key);

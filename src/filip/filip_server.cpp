@@ -170,7 +170,7 @@ void	hom_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, 
 	deepcopy_tgsw(result, CIPHER_OF_ZERO);
 	for(i = 0 ; i < mf[0] ; i++)
 	{
-		if(i == 0)
+		if(i <= 2)
 			noises[cnt++][instance] = getTGswCipherNoise(h_state[0], TGSW_KEY);
 		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
 	}
@@ -184,7 +184,7 @@ void	hom_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, 
 			for(k = 1 ; k < i + 1 ; k++)
 				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
-			if(j == 0)
+			if(j <= 2)
 				noises[cnt++][instance] = getTGswCipherNoise(tmp, TGSW_KEY);
 		}
 		if(mf[i] != 0)
