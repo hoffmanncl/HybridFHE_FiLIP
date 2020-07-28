@@ -2,3 +2,6 @@ callgrind.*
 .*.swp
 *.o
 doc
+filip_keys/
+filip
+test

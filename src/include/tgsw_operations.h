@@ -23,11 +23,13 @@ Torus32		getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key);
 void		tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *params);
 void		tGswHomAddMu(TGswSample *result, int32_t m, const TGswParams *params);
 void		tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params);
+void		tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, const TGswSample *s2, const TGswParams *params);
+
+void		deepcopy_tgsw(TGswSample *copy, const TGswSample *sample);
+void		deepcopy_tlwe_sample(TLweSample *copy, const TLweSample *sample);
+void		deepcopy_torus_polynomial(TorusPolynomial *copy, const TorusPolynomial *poly);
 
 long double	get_variance(int32_t *noises, int32_t size);
 long double	get_average(long double *noises, int32_t size);
-
-void		fake_tGswEncrypt(TGswSample *result, int32_t message);
-void		fake_tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswKey *key);
 
 #endif

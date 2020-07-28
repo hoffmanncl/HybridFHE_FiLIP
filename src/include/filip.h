@@ -10,6 +10,9 @@
 	#include	<time.h>
 	#include	<iostream>
 
+	#include	<sys/types.h>
+	#include	<sys/stat.h>
+
 	#include	<tfhe/tfhe.h>
 	#include	<tfhe/tfhe_io.h>
 
@@ -25,14 +28,11 @@ using namespace std;
 
 extern TGswParams	*TGSW_PARAMS;
 extern TGswKey		*TGSW_KEY;
-extern TGswSample	*CIPHER_OF_ZERO;
-extern TGswSample	*CIPHER_OF_ONE;
 extern int			degree;
 extern long			*mf;
+extern int32_t		xor_vars_nb;
+extern int32_t		thr_vars_nb;
 extern int			nb_var;
-
-extern TGswSample	*FAKE_CIPHER_OF_ZERO;
-extern TGswSample	*FAKE_CIPHER_OF_ONE;
 
 
 
@@ -63,31 +63,40 @@ void		shuffle(long *list, long len);
 // filip_user.cpp
 
 void		set_whitening (long* whitening, long len);
-long		filter(long *state);
+long		dsm_filter(long *state);
+long		thr_filter(long *state);
 
 void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 
 
 // filip_server.cpp
 
-void		deepcopy_tgsw(TGswSample *copy, TGswSample *sample);
-void		deepcopy_tlwe_sample(TLweSample *copy, TLweSample *sample);
-void		deepcopy_torus_polynomial(TorusPolynomial *copy, TorusPolynomial *poly);
-
 void		set_hom_whitening(TGswSample **h_whitening, int len);
-void		hom_filter(TGswSample *result, TGswSample **h_state);
+void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
+void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
 void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 
-void		fake_set_hom_whitening(TGswSample **h_whitening, int len);
-void		fake_hom_filter(TGswSample *result, TGswSample **h_state);
-void		fake_hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
-void	hom_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
+void		hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
 void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises);
+
+
+// file_management.cpp
+
+void		load_filip_key(long *key, TGswSample **h_key, int32_t k_size, double alpha);
+void		write_filip_key(int32_t k_size, double alpha, char *dir_name);
+void		read_filip_key(long *key, TGswSample **h_key, int32_t k_size, char *dir_name);
+void		write_tgsw_sample(FILE *fd, TGswSample *sample);
+void		read_tgsw_sample(TGswSample *result, FILE *fd);
+void		write_tlwe_sample(FILE *fd, TLweSample *sample);
+void		read_tlwe_sample(TLweSample *sample, FILE *fd);
+void		write_torus_polynomial(FILE *fd, TorusPolynomial *poly);
+void		read_torus_polynomial(TorusPolynomial *result, FILE *fd);
 
 
 // main.cpp
 
-void		init_filter();
+void		init_dsm_filter();
+void		init_thr_filter();
 void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		allocate_tgsw_array(TGswSample ***array, int size);

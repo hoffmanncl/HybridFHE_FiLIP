@@ -79,6 +79,44 @@ void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *
 }
 
 
+// result = mux(c, s1, s2) = s1 if Dec(c) = 0, s2 if Dec(c) = 1
+void	tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, const TGswSample *s2, const TGswParams *params)
+{
+	TGswSample	*tmp = new_TGswSample(params);
+
+	deepcopy_tgsw(tmp, s1);
+	tGswHomAdd(tmp, s2, params);
+	tGswHomMul(tmp, c, params);
+	tGswHomAdd(tmp, s1, params);
+	deepcopy_tgsw(result, tmp);
+
+	free_TGswSample(tmp);
+}
+
+
+void	deepcopy_tgsw(TGswSample *copy, const TGswSample *sample)
+{
+	for(int i = 0 ; i < (copy->k + 1) * copy->l ; i++)
+		deepcopy_tlwe_sample(&copy->all_sample[i], &sample->all_sample[i]);
+}
+
+
+void	deepcopy_tlwe_sample(TLweSample *copy, const TLweSample *sample)
+{
+	copy->current_variance = sample->current_variance;
+	for(int i = 0 ; i < copy->k + 1 ; i++) 
+		deepcopy_torus_polynomial(&copy->a[i], &sample->a[i]);
+	deepcopy_torus_polynomial(copy->b, sample->b);
+}
+
+
+void	deepcopy_torus_polynomial(TorusPolynomial *copy, const TorusPolynomial *poly)
+{
+	for(int i = 0 ; i < copy->N ; i++)
+		copy->coefsT[i] = poly->coefsT[i];
+}
+
+
 long double	get_variance(int32_t *noises, int32_t size)
 {
 	long double	avr, var = 0;
@@ -104,26 +142,4 @@ long double	get_average(long double *noises, int32_t size)
 	for(int i = 0 ; i < size ; i++)
 		avr = (i * avr + noises[i]) / (i + 1);
 	return avr;
-}
-
-
-void	fake_tGswEncrypt(TGswSample *result, int32_t message)
-{
-	int32_t	k = result->k;
-	int32_t l = result->l;
-	int32_t	N = result->all_sample->a->N;
-	int32_t	d = (k + 1) * l;
-
-	for(int i = 0 ; i < d ; i++)
-		for(int j = 0 ; j < k + 1 ; j++)
-			for(int k = 0 ; k < N ; k++)
-				result->all_sample[i].a[j].coefsT[k] = 0;
-	if(message == 1)
-		result->all_sample[k * l].b->coefsT[0] = 1U<<31;
-}
-
-
-void	fake_tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswKey *key)
-{
-	fake_tGswEncrypt(result, tGswDecryptB(result, key) * tGswDecryptB(sample, key));
 }
