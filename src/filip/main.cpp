@@ -163,24 +163,6 @@ TGswSample**	allocate_tgsw_array(int size)
 }
 
 
-TGswSample**	reallocate_tgsw_array(TGswSample **array, int size, int new_size)
-{
-	TGswSample	**new_array;
-
-	if(array != NULL)
-	{
-		for(int i = 0 ; i < size ; i++)
-			free_TGswSample(array[i]);
-		new_array = (TGswSample**)realloc(array, sizeof(TGswSample*) * new_size);
-	}
-	else
-		new_array = (TGswSample**)malloc(sizeof(TGswSample*) * new_size);
-	for(int i = 0 ; i < new_size ; i++)
-		new_array[i] = new_TGswSample(TGSW_PARAMS);
-	return new_array;
-}
-
-
 void	free_tgsw_array(TGswSample **array, int size)
 {
 	for(int i = 0 ; i < size ; i++)

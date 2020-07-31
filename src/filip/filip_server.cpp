@@ -37,32 +37,13 @@ void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 // result = result ^ MAJ(h_state)
 void	hom_maj(TGswSample *result, TGswSample **h_state)
 {
-	TGswSample	**previous_layer = NULL;
-	TGswSample	**current_layer = NULL;
+	TGswSample	**previous_layer = allocate_tgsw_array(thr_vars_nb / 2 + 1);
+	TGswSample	**current_layer = allocate_tgsw_array(thr_vars_nb / 2 + 1);
 	int			j;
 
-	printf("Entering hom maj\n");
-
 	rhombus_upper_half(previous_layer, current_layer, h_state);
-
-	printf("After upper_half : ");
-	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
-		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
-	printf("\n");
-
 	rhombus_middle_line(previous_layer, current_layer, h_state);
-	
-	printf("After middle line : ");
-	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
-		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
-	printf("\n");
-
 	rhombus_lower_half(previous_layer, current_layer, h_state);
-
-	printf("After lower_half : ");
-	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
-		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
-	printf("\n");
 
 	deepcopy_tgsw(result, current_layer[0]);
 
@@ -77,20 +58,14 @@ void	rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer,
 	TGswSample	*tmp2 = new_TGswSample(TGSW_PARAMS);
 	int	i, j;
 
-	current_layer = allocate_tgsw_array(2);
-	assert(current_layer != NULL);
 	deepcopy_tgsw(current_layer[0], h_state[0]);
 	tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
 	deepcopy_tgsw(current_layer[1], h_state[0]);
 
 	for(i = 1 ; i < thr_vars_nb / 2 ; i++)
 	{
-		previous_layer = reallocate_tgsw_array(previous_layer, i, i + 1);
-		assert(previous_layer != NULL);
 		for(j = 0 ; j < i + 1 ; j++)
 			deepcopy_tgsw(previous_layer[j], current_layer[j]);
-		current_layer = reallocate_tgsw_array(current_layer, i + 1, i + 2);
-		assert(current_layer != NULL);
 		// j = 0 : mul by complementary
 		deepcopy_tgsw(current_layer[0], h_state[i]);
 		tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
@@ -121,16 +96,11 @@ void	rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer
 	TGswSample	*tmp2 = new_TGswSample(TGSW_PARAMS);
 	int			j;
 
-	previous_layer = reallocate_tgsw_array(previous_layer, thr_vars_nb / 2, thr_vars_nb / 2 + 1);
-	assert(previous_layer != NULL);
 	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
 		deepcopy_tgsw(previous_layer[j], current_layer[j]);
 	// j = 0
 	deepcopy_tgsw(current_layer[0], h_state[thr_vars_nb / 2]);
-	printf("Current layer = 1 ? %d\n", tGswDecryptB(current_layer[0], TGSW_KEY));
-	printf("Previous layer = 0 ? %d\n", tGswDecryptB(previous_layer[0], TGSW_KEY));
 	tGswHomMul(current_layer[0], previous_layer[0], TGSW_PARAMS);
-	printf("Mul result = 0 ? %d\n", tGswDecryptB(current_layer[0], TGSW_KEY));
 	for(j = 1 ; j < thr_vars_nb / 2 ; j++)
 	{
 		deepcopy_tgsw(tmp1, h_state[thr_vars_nb / 2]);
@@ -158,12 +128,8 @@ void	rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer,
 	{
 		for(j = 0 ; j < thr_vars_nb - i + 1 ; j++)
 			deepcopy_tgsw(previous_layer[j], current_layer[j]);
-
-		// j = 0 : mul
-		deepcopy_tgsw(current_layer[0], h_state[i]);
-		tGswHomMul(current_layer[0], previous_layer[0], TGSW_PARAMS);
-		// j = 1...(thr_vars_nb - i - 2) - mux
-		for(j = 1 ; j < thr_vars_nb - i - 1 ; j++)
+		// j = 0...(thr_vars_nb - i - 2) - mux
+		for(j = 0 ; j < thr_vars_nb - i - 1 ; j++)
 		{
 			deepcopy_tgsw(tmp1, h_state[i]);
 			tGswHomAddMu(tmp1, 1, TGSW_PARAMS);
