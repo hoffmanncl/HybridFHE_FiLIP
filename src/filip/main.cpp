@@ -14,7 +14,27 @@ int			nb_var;
 
 int		main(int argc, char const *argv[])
 {
-	init_dsm_filter();
+	init_thr_filter();
+
+	int			state_length = 7;
+	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * 1);
+	init_tgsw_sets(variables_sets, 1);
+	TGSW_PARAMS = new_TGswParams(variables_sets->l, 1, new_TLweParams(variables_sets->N, variables_sets->k, 0., 1.));
+	TGSW_KEY = new_random_key(TGSW_PARAMS);
+	int			state[7] = {1, 0, 0, 1, 0, 1, 0};
+	TGswSample	**h_state = allocate_tgsw_array(state_length);
+	TGswSample	*result = new_TGswSample(TGSW_PARAMS);
+
+	printf("Before hom key encryption\n");
+	for(int i = 0 ; i < 7 ; i++)
+	{
+		if(h_state[i] == NULL)
+			printf("AH\n");
+		tGswEncryptB(h_state[i], state[i], variables_sets->alpha, TGSW_KEY);
+	}
+	hom_maj(result, h_state);
+
+	/*init_dsm_filter();
 
 	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
 
@@ -41,8 +61,8 @@ int		main(int argc, char const *argv[])
 
 	for(int s = 0 ; s < nb_sets ; s++)
 	{
-		init_tgsw(variables_sets + s, &h_key, &h_message, &h_cipher, k_size, m_size);
-		load_filip_key(key, h_key, k_size, (variables_sets + s)->alpha);																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																		
+		init_tgsw(variables_sets + s, h_key, h_message, h_cipher, k_size, m_size);
+		load_filip_key(key, h_key, k_size, (variables_sets + s)->alpha);
 		display_tgsw_set(variables_sets + s);
 
 		for(i = 0 ; i < m_size ; i++)
@@ -71,7 +91,7 @@ int		main(int argc, char const *argv[])
 		else
 			printf("Homomorphic evaluation successful !\n");
 
-		free_tgsw(&h_key, &h_message, &h_cipher, k_size, m_size);
+		free_tgsw(h_key, h_message, h_cipher, k_size, m_size);
 	}
 
 	for(i = 0 ; i < 18 ; i++)
@@ -79,7 +99,7 @@ int		main(int argc, char const *argv[])
 	free(noises);
 	free(key);
 	free(message);
-	free(cipher);
+	free(cipher);*/
 	return 0;
 }
 
@@ -100,32 +120,29 @@ void	init_dsm_filter()
 	mf[7] = 80;
 	for(i = 0 ; i < degree ; i++)
 		nb_var += (i + 1) * mf[i];
-	/*for(i = 0 ; i < degree ; i++)
-	{
-		mf[i] = 2;
-		nb_var += (i+1) * mf[i];
-	}*/
 }
 
 
 void	init_thr_filter()
 {
-	//TODO
+	xor_vars_nb = 9;
+	thr_vars_nb = 7;
+	nb_var = xor_vars_nb + thr_vars_nb;
 }
 
 
-void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
+void	init_tgsw(tgsw_vars *vars, TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size)
 {
 	TGSW_PARAMS = new_TGswParams(vars->l, 1, new_TLweParams(vars->N, vars->k, 0., 1.));
 	TGSW_KEY = new_random_key(TGSW_PARAMS);
 
-	allocate_tgsw_array(h_key, k_size);
-	allocate_tgsw_array(h_message, m_size);
-	allocate_tgsw_array(h_cipher, m_size);
+	h_key = allocate_tgsw_array(k_size);
+	h_message = allocate_tgsw_array(m_size);
+	h_cipher = allocate_tgsw_array(m_size);
 }
 
 
-void	free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
+void	free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size)
 {
 	free_TGswParams(TGSW_PARAMS);
 	free_TGswKey(TGSW_KEY);
@@ -136,19 +153,39 @@ void	free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cip
 }
 
 
-void	allocate_tgsw_array(TGswSample ***array, int size)
+TGswSample**	allocate_tgsw_array(int size)
 {
-	*array = (TGswSample**)malloc(sizeof(TGswSample*) * size);
+	TGswSample	**array = (TGswSample**)malloc(sizeof(TGswSample*) * size);
+
 	for(int i = 0 ; i < size ; i++)
-		(*array)[i] = new_TGswSample(TGSW_PARAMS);
+		array[i] = new_TGswSample(TGSW_PARAMS);
+	return array;
 }
 
 
-void	free_tgsw_array(TGswSample ***array, int size)
+TGswSample**	reallocate_tgsw_array(TGswSample **array, int size, int new_size)
+{
+	TGswSample	**new_array;
+
+	if(array != NULL)
+	{
+		for(int i = 0 ; i < size ; i++)
+			free_TGswSample(array[i]);
+		new_array = (TGswSample**)realloc(array, sizeof(TGswSample*) * new_size);
+	}
+	else
+		new_array = (TGswSample**)malloc(sizeof(TGswSample*) * new_size);
+	for(int i = 0 ; i < new_size ; i++)
+		new_array[i] = new_TGswSample(TGSW_PARAMS);
+	return new_array;
+}
+
+
+void	free_tgsw_array(TGswSample **array, int size)
 {
 	for(int i = 0 ; i < size ; i++)
-		free_TGswSample((*array)[i]);
-	free(*array);
+		free_TGswSample(array[i]);
+	free(array);
 }
 
 
@@ -162,8 +199,8 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 {
 	sets->k = 1;
 	sets->N = 512;
-	sets->l = 32;
-	sets->alpha = 1e-6;
+	sets->l = 64;
+	sets->alpha = 1e-14;
 
 	/*(sets + 1)->k = 1;
 	(sets + 1)->N = 512;
@@ -201,156 +238,6 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 	printf("\n");
 
 	printf("%d\n", ((h_key[0])->all_sample->a->coefsT)[0]);*/
-
-
-
-/*BENCH HOM_FILIP
-
-	init_filter();
-
-	long		*key, *message, *cipher;
-	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
-	TGswSample	**h_key, **h_message, **h_cipher;
-
-	int32_t		*noises = (int*)malloc(sizeof(int) * m_size);
-	clock_t		inter;
-	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * nb_sets);
-
-	printf("\nm_size = %d ; k_size = %d ; mf = [", m_size, k_size);
-	for(i = 0 ; i < degree - 1 ; i++)
-		printf("%ld, ", mf[i]);
-	printf("%ld]\n\n\n", mf[degree - 1]);
-
-	key = (long*)malloc(sizeof(long) * k_size);
-	message = (long*)malloc(sizeof(long) * m_size);
-	cipher = (long*)malloc(sizeof(long) * m_size);
-
-	new_random_binary_sequence(key, k_size);
-	new_random_binary_sequence(message, m_size);
-	init_tgsw_sets(variables_sets, nb_sets);
-	for(int s = 0 ; s < nb_sets ; s++)
-	{
-		init_tgsw(variables_sets + s, &h_key, &h_message, &h_cipher, k_size, m_size);
-		display_tgsw_set(variables_sets + s);
-		for(i = 0 ; i < k_size ; i++)
-			deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-		for(i = 0 ; i < m_size ; i++)
-			deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-
-		reset_prng();
-		FiLIP(cipher, message, m_size, key, k_size);
-		reset_prng();
-		inter = clock();
-		hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
-		inter = clock() - inter;
-
-		for(i = 0 ; i < m_size ; i++)
-			noises[i] = getTGswCipherNoise(h_cipher[i], TGSW_KEY);
-
-		printf("FiLIP homomorphic encryption time = %.2f\n", (double)inter / (CLOCKS_PER_SEC * m_size));
-		printf("FiLIP cipher error variance  = %Le\n\n\n", get_variance(noises, m_size));
-
-		for(i = 0 ; i < m_size ; i++)
-			if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
-				break;
-		if(i != m_size)
-			printf("Error in FiLIP homomorphic evaluation :x\n");
-
-		free_tgsw(&h_key, &h_message, &h_cipher, k_size, m_size);
-	}
-
-	free(noises);
-	free(key);
-	free(message);
-	free(cipher);
-	return 0;
-*/
-
-
-/*TEST FAKE_HOM_FILIP
-	init_globals();
-
-	long		*key, *message, *cipher;
-	int			k_size = 100, m_size = 20, i;
-	TGswSample	**h_key, **h_message, **h_cipher;
-
-	key = (long*)malloc(sizeof(long) * k_size);
-	message = (long*)malloc(sizeof(long) * m_size);
-	cipher = (long*)malloc(sizeof(long) * m_size);
-	allocate_tgsw_array(&h_key, k_size);
-	allocate_tgsw_array(&h_message, m_size);
-	allocate_tgsw_array(&h_cipher, m_size);
-
-	new_random_binary_sequence(key, k_size);
-	for(int i = 0 ; i < k_size ; i++)
-		deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-	new_random_binary_sequence(message, m_size);
-	for(int i = 0 ; i < m_size ; i++)
-		deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-
-	reset_prng();
-	FiLIP(cipher, message, m_size, key, k_size);
-	reset_prng();
-	fake_hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
-
-	for(i = 0 ; i < m_size ; i++)
-		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
-			break;
-	if(i == m_size)
-		printf("Yay\n");
-	else
-		printf(":c %d\n", i);
-
-	free(key);
-	free(message);
-	free(cipher);
-	free_tgsw_array(&h_key, nb_var);
-	free_tgsw_array(&h_message, m_size);
-	free_tgsw_array(&h_cipher, m_size);
-*/
-
-
-
-/*TEST HOM_FILIP
-	init_globals();
-
-	long		*key, *message, *cipher;
-	int			k_size = 100, m_size = 5, i;
-	TGswSample	**h_key, **h_message, **h_cipher;
-
-	key = (long*)malloc(sizeof(long) * k_size);
-	message = (long*)malloc(sizeof(long) * m_size);
-	cipher = (long*)malloc(sizeof(long) * m_size);
-	allocate_tgsw_array(&h_key, k_size);
-	allocate_tgsw_array(&h_message, m_size);
-	allocate_tgsw_array(&h_cipher, m_size);
-
-	new_random_binary_sequence(key, k_size);
-	for(int i = 0 ; i < k_size ; i++)
-		deepcopy_tgsw(h_key[i], key[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-	new_random_binary_sequence(message, m_size);
-	for(int i = 0 ; i < m_size ; i++)
-		deepcopy_tgsw(h_message[i], message[i] ? CIPHER_OF_ONE : CIPHER_OF_ZERO);
-
-	reset_prng();
-	FiLIP(cipher, message, m_size, key, k_size);
-	reset_prng();
-	hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
-
-	for(i = 0 ; i < m_size ; i++)
-		if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
-			break;
-	if(i == m_size)
-		printf("Yay\n");
-	else
-		printf(":c %d\n", i);
-
-	free(key);
-	free(message);
-	free(cipher);
-	free_tgsw_array(&h_key, nb_var);
-	free_tgsw_array(&h_message, m_size);
-	free_tgsw_array(&h_cipher, m_size);*/
 
 
 

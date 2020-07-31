@@ -27,19 +27,166 @@ void	hom_dsm_filter(TGswSample *result, TGswSample **h_state)
 
 void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 {
-	//TODO
+	deepcopy_tgsw(result, h_state[0]);
+	for(int32_t i = 1 ; i < xor_vars_nb ; i++)
+		tGswHomAdd(result, h_state[i], TGSW_PARAMS);
+	hom_maj(result, h_state + xor_vars_nb);
+}
+
+
+// result = result ^ MAJ(h_state)
+void	hom_maj(TGswSample *result, TGswSample **h_state)
+{
+	TGswSample	**previous_layer = NULL;
+	TGswSample	**current_layer = NULL;
+	int			j;
+
+	printf("Entering hom maj\n");
+
+	rhombus_upper_half(previous_layer, current_layer, h_state);
+
+	printf("After upper_half : ");
+	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
+		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
+	printf("\n");
+
+	rhombus_middle_line(previous_layer, current_layer, h_state);
+	
+	printf("After middle line : ");
+	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
+		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
+	printf("\n");
+
+	rhombus_lower_half(previous_layer, current_layer, h_state);
+
+	printf("After lower_half : ");
+	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
+		printf("%d ", tGswDecryptB(current_layer[j], TGSW_KEY));
+	printf("\n");
+
+	deepcopy_tgsw(result, current_layer[0]);
+
+	free_tgsw_array(current_layer, thr_vars_nb / 2 + 1);
+	free_tgsw_array(previous_layer, thr_vars_nb / 2 + 1);
+}
+
+
+void	rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state)
+{
+	TGswSample	*tmp1 = new_TGswSample(TGSW_PARAMS);
+	TGswSample	*tmp2 = new_TGswSample(TGSW_PARAMS);
+	int	i, j;
+
+	current_layer = allocate_tgsw_array(2);
+	assert(current_layer != NULL);
+	deepcopy_tgsw(current_layer[0], h_state[0]);
+	tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
+	deepcopy_tgsw(current_layer[1], h_state[0]);
+
+	for(i = 1 ; i < thr_vars_nb / 2 ; i++)
+	{
+		previous_layer = reallocate_tgsw_array(previous_layer, i, i + 1);
+		assert(previous_layer != NULL);
+		for(j = 0 ; j < i + 1 ; j++)
+			deepcopy_tgsw(previous_layer[j], current_layer[j]);
+		current_layer = reallocate_tgsw_array(current_layer, i + 1, i + 2);
+		assert(current_layer != NULL);
+		// j = 0 : mul by complementary
+		deepcopy_tgsw(current_layer[0], h_state[i]);
+		tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
+		tGswHomMul(current_layer[0], previous_layer[0], TGSW_PARAMS);
+		// j = 1...i - mux
+		for(j = 1 ; j < i + 1 ; j++)
+		{
+			deepcopy_tgsw(tmp1, h_state[i]);
+			tGswHomAddMu(tmp1, 1, TGSW_PARAMS);
+			tGswHomMul(tmp1, previous_layer[j], TGSW_PARAMS);
+			deepcopy_tgsw(tmp2, h_state[i]);
+			tGswHomMul(tmp2, previous_layer[j - 1], TGSW_PARAMS);
+			tGswHomMux(current_layer[j], h_state[i], tmp1, tmp2, TGSW_PARAMS);
+		}
+		// j = i + 1 : mul
+		deepcopy_tgsw(current_layer[i + 1], h_state[i]);
+		tGswHomMul(current_layer[i + 1], previous_layer[i], TGSW_PARAMS);
+	}
+
+	free_TGswSample(tmp1);
+	free_TGswSample(tmp2);
+}
+
+
+void	rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state)
+{
+	TGswSample	*tmp1 = new_TGswSample(TGSW_PARAMS);
+	TGswSample	*tmp2 = new_TGswSample(TGSW_PARAMS);
+	int			j;
+
+	previous_layer = reallocate_tgsw_array(previous_layer, thr_vars_nb / 2, thr_vars_nb / 2 + 1);
+	assert(previous_layer != NULL);
+	for(j = 0 ; j < thr_vars_nb / 2 + 1 ; j++)
+		deepcopy_tgsw(previous_layer[j], current_layer[j]);
+	// j = 0
+	deepcopy_tgsw(current_layer[0], h_state[thr_vars_nb / 2]);
+	printf("Current layer = 1 ? %d\n", tGswDecryptB(current_layer[0], TGSW_KEY));
+	printf("Previous layer = 0 ? %d\n", tGswDecryptB(previous_layer[0], TGSW_KEY));
+	tGswHomMul(current_layer[0], previous_layer[0], TGSW_PARAMS);
+	printf("Mul result = 0 ? %d\n", tGswDecryptB(current_layer[0], TGSW_KEY));
+	for(j = 1 ; j < thr_vars_nb / 2 ; j++)
+	{
+		deepcopy_tgsw(tmp1, h_state[thr_vars_nb / 2]);
+		tGswHomAddMu(tmp1, 1, TGSW_PARAMS);
+		tGswHomMul(tmp1, previous_layer[j + 1], TGSW_PARAMS);
+		deepcopy_tgsw(tmp2, h_state[thr_vars_nb / 2]);
+		tGswHomMul(tmp2, previous_layer[j], TGSW_PARAMS);
+		tGswHomMux(current_layer[j], h_state[thr_vars_nb / 2], tmp1, tmp2, TGSW_PARAMS);
+	}
+	deepcopy_tgsw(current_layer[thr_vars_nb / 2], h_state[thr_vars_nb / 2]);
+	tGswHomMul(current_layer[thr_vars_nb / 2], previous_layer[thr_vars_nb / 2], TGSW_PARAMS);
+
+	free_TGswSample(tmp1);
+	free_TGswSample(tmp2);
+}
+
+
+void	rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state)
+{
+	TGswSample	*tmp1 = new_TGswSample(TGSW_PARAMS);
+	TGswSample	*tmp2 = new_TGswSample(TGSW_PARAMS);
+	int			i, j;
+
+	for(i = thr_vars_nb / 2 + 1 ; i < thr_vars_nb ; i++)
+	{
+		for(j = 0 ; j < thr_vars_nb - i + 1 ; j++)
+			deepcopy_tgsw(previous_layer[j], current_layer[j]);
+
+		// j = 0 : mul
+		deepcopy_tgsw(current_layer[0], h_state[i]);
+		tGswHomMul(current_layer[0], previous_layer[0], TGSW_PARAMS);
+		// j = 1...(thr_vars_nb - i - 2) - mux
+		for(j = 1 ; j < thr_vars_nb - i - 1 ; j++)
+		{
+			deepcopy_tgsw(tmp1, h_state[i]);
+			tGswHomAddMu(tmp1, 1, TGSW_PARAMS);
+			tGswHomMul(tmp1, previous_layer[j + 1], TGSW_PARAMS);
+			deepcopy_tgsw(tmp2, h_state[i]);
+			tGswHomMul(tmp2, previous_layer[j], TGSW_PARAMS);
+			tGswHomMux(current_layer[j], h_state[i], tmp1, tmp2, TGSW_PARAMS);
+		}
+		// j = thr_vars_nb - i - 1 : mul and add
+		deepcopy_tgsw(current_layer[thr_vars_nb - i - 1], h_state[i]);
+		tGswHomMul(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i - 1], TGSW_PARAMS);
+		tGswHomAdd(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i], TGSW_PARAMS);
+	}
 }
 
 
 void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size)
 {
-	TGswSample	**h_state;
+	TGswSample	**h_state = allocate_tgsw_array(nb_var);
 	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
 	long		*indice = (long*)malloc(sizeof(long) * k_size);
 	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
 	int			i, j;
-
-	allocate_tgsw_array(&h_state, nb_var);
 
 	for(i = 0 ; i < k_size ; i++)
 		indice[i] = i;
@@ -58,7 +205,7 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
 	}
 
-	free_tgsw_array(&h_state, nb_var);
+	free_tgsw_array(h_state, nb_var);
 	free_TGswSample(tmp);
 	free(indice);
 }
@@ -99,13 +246,11 @@ void	hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **nois
 
 void	hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises)
 {
-	TGswSample	**h_state;
+	TGswSample	**h_state = allocate_tgsw_array(nb_var);
 	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
 	long		*indice = (long*)malloc(sizeof(long) * k_size);
 	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
 	int			i, j;
-
-	allocate_tgsw_array(&h_state, nb_var);
 
 	for(i = 0 ; i < k_size ; i++)
 		indice[i] = i;
@@ -125,7 +270,7 @@ void	hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSamp
 		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
 	}
 
-	free_tgsw_array(&h_state, nb_var);
+	free_tgsw_array(h_state, nb_var);
 	free_TGswSample(tmp);
 	free(indice);
 }

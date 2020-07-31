@@ -12,6 +12,7 @@
 
 	#include	<sys/types.h>
 	#include	<sys/stat.h>
+	#include	<assert.h>
 
 	#include	<tfhe/tfhe.h>
 	#include	<tfhe/tfhe_io.h>
@@ -74,6 +75,10 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 void		set_hom_whitening(TGswSample **h_whitening, int len);
 void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
 void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
+void		hom_maj(TGswSample *result, TGswSample **h_state);
+void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
+void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
+void		rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 
 void		hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
@@ -97,10 +102,11 @@ void		read_torus_polynomial(TorusPolynomial *result, FILE *fd);
 
 void		init_dsm_filter();
 void		init_thr_filter();
-void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
-void		free_tgsw(TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
-void		allocate_tgsw_array(TGswSample ***array, int size);
-void		free_tgsw_array(TGswSample ***array, int size);
+void		init_tgsw(tgsw_vars *vars, TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
+void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
+TGswSample**	allocate_tgsw_array(int size);
+TGswSample**	reallocate_tgsw_array(TGswSample **array, int size, int new_size);
+void		free_tgsw_array(TGswSample **array, int size);
 void		display_tgsw_set(tgsw_vars *vars);
 
 void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
