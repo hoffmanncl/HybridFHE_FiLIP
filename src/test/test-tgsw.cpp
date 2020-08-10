@@ -10,6 +10,7 @@
 
 int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_tGswHomSub(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomAddMu(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomMux(const TGswKey *key, double alpha, int32_t nb_tests);
@@ -34,7 +35,7 @@ int			main(int argc, char const *argv[])
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-6;
 
-	test_tGswHomMux(key, alpha, 1000);
+	test_tGswHomSub(key, alpha, 1000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -95,6 +96,33 @@ int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests)
 	delete_TGswSample(cipher_1);
 	delete_TGswSample(cipher_2);
 	return ret;
+}
+
+
+void		test_tGswHomSub(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	printf("test_tGswHomSub - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
+	TGswSample	*cipher_1 = new_TGswSample(key->params);
+	TGswSample	*cipher_2 = new_TGswSample(key->params);
+	int32_t		success_count;
+
+	for(int m1 = 0 ; m1 < 2 ; m1++)
+		for(int m2 = 0 ; m2 < 2 ; m2++)
+		{
+			success_count = 0;
+			for(int i = 0 ; i < nb_tests ; i++)
+			{
+				tGswEncryptB(cipher_1, m1, alpha, key);
+				tGswEncryptB(cipher_2, m2, alpha, key);
+				tGswHomAdd(cipher_1, cipher_2, key->params);
+				if(m1^m2 == tGswDecryptB(cipher_1, key))
+					success_count++;
+			}
+			printf("m1 = %d ; m2 = %d - Among %d tests, %d successful\n", m1, m2, nb_tests, success_count);
+		}
+	delete_TGswSample(cipher_1);
+	delete_TGswSample(cipher_2);
 }
 
 

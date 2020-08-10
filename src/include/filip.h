@@ -29,6 +29,7 @@ using namespace std;
 
 extern TGswParams	*TGSW_PARAMS;
 extern TGswKey		*TGSW_KEY;
+extern double		alpha;
 extern int			degree;
 extern long			*mf;
 extern int32_t		xor_vars_nb;
@@ -75,11 +76,11 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 void		set_hom_whitening(TGswSample **h_whitening, int len);
 void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
 void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
+void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 void		hom_maj(TGswSample *result, TGswSample **h_state);
 void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
-void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
 
 void		hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
 void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises);
@@ -87,9 +88,10 @@ void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSam
 
 // file_management.cpp
 
-void		load_filip_key(long *key, TGswSample **h_key, int32_t k_size, double alpha);
-void		write_filip_key(int32_t k_size, double alpha, char *dir_name);
-void		read_filip_key(long *key, TGswSample **h_key, int32_t k_size, char *dir_name);
+void		load_filip_key(long* key, TGswSample **h_key, int k_size, double alpha);
+void		write_filip_key(int k_size, double alpha, char *dir_name);
+void		read_filip_key(long *key, TGswSample **h_key, int k_size, char *dir_name);
+
 void		write_tgsw_sample(FILE *fd, TGswSample *sample);
 void		read_tgsw_sample(TGswSample *result, FILE *fd);
 void		write_tlwe_sample(FILE *fd, TLweSample *sample);
@@ -97,12 +99,14 @@ void		read_tlwe_sample(TLweSample *sample, FILE *fd);
 void		write_torus_polynomial(FILE *fd, TorusPolynomial *poly);
 void		read_torus_polynomial(TorusPolynomial *result, FILE *fd);
 
+int			get_alpha_exp(double alpha);
+
 
 // main.cpp
 
 void		init_dsm_filter();
 void		init_thr_filter();
-void		init_tgsw(tgsw_vars *vars, TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
+void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
 TGswSample**	allocate_tgsw_array(int size);
 void		free_tgsw_array(TGswSample **array, int size);

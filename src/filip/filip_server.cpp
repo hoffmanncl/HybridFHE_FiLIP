@@ -34,6 +34,37 @@ void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 }
 
 
+void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size)
+{
+	TGswSample	**h_state = allocate_tgsw_array(nb_var);
+	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
+	long		*indice = (long*)malloc(sizeof(long) * k_size);
+	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
+	int			i, j;
+
+	for(i = 0 ; i < k_size ; i++)
+		indice[i] = i;
+
+	for(i = 0 ; i < m_size ; i++)
+	{
+		shuffle(indice, k_size);
+		set_whitening(whitening, nb_var);
+		for(j = 0 ; j < nb_var ; j++)
+		{
+			deepcopy_tgsw(h_state[j], key[indice[j]]);
+			tGswHomAddMu(h_state[j], whitening[j], TGSW_PARAMS);
+		}
+		deepcopy_tgsw(output[i], input[i]);
+		hom_dsm_filter(tmp, h_state);
+		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
+	}
+
+	free_tgsw_array(h_state, nb_var);
+	free_TGswSample(tmp);
+	free(indice);
+}
+
+
 // result = result ^ MAJ(h_state)
 void	hom_maj(TGswSample *result, TGswSample **h_state)
 {
@@ -143,37 +174,6 @@ void	rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer,
 		tGswHomMul(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i - 1], TGSW_PARAMS);
 		tGswHomAdd(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i], TGSW_PARAMS);
 	}
-}
-
-
-void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size)
-{
-	TGswSample	**h_state = allocate_tgsw_array(nb_var);
-	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
-	long		*indice = (long*)malloc(sizeof(long) * k_size);
-	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
-	int			i, j;
-
-	for(i = 0 ; i < k_size ; i++)
-		indice[i] = i;
-
-	for(i = 0 ; i < m_size ; i++)
-	{
-		shuffle(indice, k_size);
-		set_whitening(whitening, nb_var);
-		for(j = 0 ; j < nb_var ; j++)
-		{
-			deepcopy_tgsw(h_state[j], key[indice[j]]);
-			tGswHomAddMu(h_state[j], whitening[j], TGSW_PARAMS);
-		}
-		deepcopy_tgsw(output[i], input[i]);
-		hom_dsm_filter(tmp, h_state);
-		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
-	}
-
-	free_tgsw_array(h_state, nb_var);
-	free_TGswSample(tmp);
-	free(indice);
 }
 
 

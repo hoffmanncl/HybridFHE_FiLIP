@@ -60,6 +60,18 @@ void	tGswHomAdd(TGswSample *result, const TGswSample *sample, const TGswParams *
 }
 
 
+// same as add, can be useful to nullify noise
+void	tGswHomSub(TGswSample *result, const TGswSample *sample, const TGswParams *params)
+{
+	// samples must have same parameters
+	const TLweParams	*tlwe_params = params->tlwe_params;
+	int32_t				d = params->kpl;
+
+	for(int32_t i = 0 ; i < d ; i++)
+		tLweSubTo(&result->all_sample[i], &sample->all_sample[i], tlwe_params);
+}
+
+
 // result = result ^ message
 void	tGswHomAddMu(TGswSample *result, int32_t message, const TGswParams *params)
 {
