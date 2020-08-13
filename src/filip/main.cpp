@@ -15,6 +15,38 @@ int			nb_var;
 
 int		main(int argc, char const *argv[])
 {
+	bench_filip_dsm();
+	/*init_thr_filter();
+	TGSW_PARAMS = new_TGswParams(32, 1, new_TLweParams(512, 1, 0., 1.));
+	TGSW_KEY = new_random_key(TGSW_PARAMS);
+
+	long		*state = (long*)malloc(sizeof(long) * nb_var);
+	TGswSample	**h_state = allocate_tgsw_array(nb_var);
+	double		alpha = 1e-9;
+	int			i, j;
+	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
+	int			result;
+
+	for(j = 0 ; j < 50 ; j++)
+	{
+		new_random_binary_sequence(state, nb_var);
+		for(i = 0 ; i < nb_var ; i++)
+			tGswEncryptB(h_state[i], state[i], alpha, TGSW_KEY);
+		result = thr_filter(state);
+		hom_thr_filter(h_result, h_state);
+		if(result != tGswDecryptB(h_result, TGSW_KEY))
+			break;
+	}
+	if(j == 50)
+		printf("Yay\n");
+	else
+		printf("i = %d :c\n", j);*/
+	return 0;
+}
+
+
+void	bench_filip_dsm()
+{
 	init_dsm_filter();
 
 	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
@@ -68,8 +100,7 @@ int		main(int argc, char const *argv[])
 
 	free(key);
 	free(message);
-	free(cipher);
-	return 0;
+	free(cipher);	
 }
 
 

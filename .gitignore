@@ -4,4 +4,5 @@ callgrind.*
 doc
 filip_keys/
 filip
+!filip/
 test

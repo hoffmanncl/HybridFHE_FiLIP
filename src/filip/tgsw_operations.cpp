@@ -96,8 +96,8 @@ void	tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, c
 {
 	TGswSample	*tmp = new_TGswSample(params);
 
-	deepcopy_tgsw(tmp, s1);
-	tGswHomAdd(tmp, s2, params);
+	deepcopy_tgsw(tmp, s2);
+	tGswHomSub(tmp, s1, params);
 	tGswHomMul(tmp, c, params);
 	tGswHomAdd(tmp, s1, params);
 	deepcopy_tgsw(result, tmp);
