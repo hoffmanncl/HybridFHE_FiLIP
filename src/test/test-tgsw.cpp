@@ -33,9 +33,9 @@ int			main(int argc, char const *argv[])
 	TGswParams *params = new_TGswParams(32, 1, new_TLweParams(512, 1, 0., 1.));
 	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max
 	TGswKey		*key = new_random_key(params);
-	double		alpha = 1e-6;
+	double		alpha = 1e-9;
 
-	test_tGswHomSub(key, alpha, 1000);
+	test_mul_noise(key, alpha, 1000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);

@@ -16,6 +16,9 @@
 #endif
 
 
+
+//tgsw_operations.cpp
+
 TGswKey		*new_random_key(const TGswParams *params);
 void		tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const TGswKey *key);
 int32_t		tGswDecryptB(const TGswSample *cipher, const TGswKey *key);
@@ -31,5 +34,8 @@ void		deepcopy_torus_polynomial(TorusPolynomial *copy, const TorusPolynomial *po
 
 long double	get_variance(int32_t *noises, int32_t size);
 long double	get_average(long double *noises, int32_t size);
+
+
+//tgsw_operations_fft.cpp
 
 #endif
