@@ -30,6 +30,7 @@ void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 	deepcopy_tgsw(result, h_state[0]);
 	for(int32_t i = 1 ; i < xor_vars_nb ; i++)
 		tGswHomAdd(result, h_state[i], TGSW_PARAMS);
+	noises[0][noise_cnt] = getTGswCipherNoise(result, TGSW_KEY);
 	hom_maj(result, h_state + xor_vars_nb);
 }
 
@@ -93,6 +94,8 @@ void	rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer,
 	tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
 	deepcopy_tgsw(current_layer[1], h_state[0]);
 
+	noises[1][noise_cnt] = getTGswCipherNoise(current_layer[1], TGSW_KEY);
+
 	for(i = 1 ; i < thr_vars_nb / 2 ; i++)
 	{
 		for(j = 0 ; j < i + 1 ; j++)
@@ -114,6 +117,7 @@ void	rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer,
 		// j = i + 1 : mul
 		deepcopy_tgsw(current_layer[i + 1], h_state[i]);
 		tGswHomMul(current_layer[i + 1], previous_layer[i], TGSW_PARAMS);
+		noises[i + 1][noise_cnt] = getTGswCipherNoise(current_layer[1], TGSW_KEY);
 	}
 
 	free_TGswSample(tmp1);
@@ -144,6 +148,8 @@ void	rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer
 	deepcopy_tgsw(current_layer[thr_vars_nb / 2], h_state[thr_vars_nb / 2]);
 	tGswHomMul(current_layer[thr_vars_nb / 2], previous_layer[thr_vars_nb / 2], TGSW_PARAMS);
 
+	noises[thr_vars_nb / 2 + 1][noise_cnt] = getTGswCipherNoise(current_layer[1], TGSW_KEY);
+
 	free_TGswSample(tmp1);
 	free_TGswSample(tmp2);
 }
@@ -173,6 +179,8 @@ void	rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer,
 		deepcopy_tgsw(current_layer[thr_vars_nb - i - 1], h_state[i]);
 		tGswHomMul(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i - 1], TGSW_PARAMS);
 		tGswHomAdd(current_layer[thr_vars_nb - i - 1], previous_layer[thr_vars_nb - i], TGSW_PARAMS);
+		
+		noises[i + 1][noise_cnt] = getTGswCipherNoise(current_layer[1], TGSW_KEY);
 	}
 }
 

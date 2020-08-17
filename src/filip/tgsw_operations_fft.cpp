@@ -1,7 +1,7 @@
 #include	"include/tgsw_operations.h"
 
 
-	void	tGswEncrypt_fft(TGswSampleFFT *result, const int32_t message, double alpha, const TGswKey *key)
+void	tGswEncrypt_fft(TGswSampleFFT *result, const int32_t message, double alpha, const TGswKey *key)
 {
 
 }
