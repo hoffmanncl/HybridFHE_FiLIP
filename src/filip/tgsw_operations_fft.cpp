@@ -3,7 +3,13 @@
 
 void	tGswEncrypt_fft(TGswSampleFFT *result, const int32_t message, double alpha, const TGswKey *key)
 {
+	TGswSample	*zero_sample = new_TGswSample(key->params);
 
+	tGswEncryptZero(result, alpha, key);
+	tGswToFFTConvert(result, zero_sample, key->params);
+	if(message == 1)
+		
+	free_TGswSample(zero_sample);
 }
 
 

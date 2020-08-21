@@ -9,10 +9,12 @@
 
 
 int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_tlwe_encdec(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomSub(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomAddMu(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_tLweHomMul(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomMux(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_tgsw_extern_product(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_get_tgsw_cipher_noise(const TGswKey *key, double alpha, int32_t nb_tests);
@@ -35,7 +37,7 @@ int			main(int argc, char const *argv[])
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-9;
 
-	test_mul_noise(key, alpha, 1000);
+	test_tLweHomMul(key, alpha, 1000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -67,6 +69,28 @@ int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_te
 	printf("\n");
 	delete_TGswSample(cipher);
 	return ret;
+}
+
+
+void		test_tlwe_encdec(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TLweSample	*cipher = new_TLweSample(key->params->tlwe_params);
+	const TLweKey		*tlwe_key = &key->tlwe_key;
+	int32_t		cnt;
+
+	printf("test_tlwe_encdec - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+
+	for(int m = 0 ; m < 2 ; m++)
+	{
+		cnt = 0;
+		for(int i = 0 ; i < nb_tests ; i++)
+		{
+			tLweEncryptB(cipher, m, alpha, tlwe_key);
+			if(m == tLweDecryptB(cipher, tlwe_key))
+				cnt++;
+		} 
+		printf("m = %d ; among %d tests, %d successful\n", m, nb_tests, cnt);
+	}
 }
 
 
@@ -175,6 +199,32 @@ int			test_hom_mul(const TGswKey *key, double alpha, int32_t nb_tests)
 	delete_TGswSample(cipher_1);
 	delete_TGswSample(cipher_2);
 	return ret;
+}
+
+
+void		test_tLweHomMul(const TGswKey *key, double alpha, int32_t nb_tests)
+{
+	TLweSample	*cipher1 = new_TLweSample(key->params->tlwe_params);
+	TGswSample	*cipher2 = new_TGswSample(key->params);
+	int32_t		cnt, m1, m2, i;
+
+	printf("test_tLweHomMul - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
+	for(m1 = 0 ; m1 < 2 ; m1++)
+		for(m2 = 0 ; m2 < 2 ; m2++)
+		{
+			cnt = 0;
+			for(i = 0 ; i < nb_tests ; i++)
+			{
+				tLweEncryptB(cipher1, m1, alpha, &key->tlwe_key);
+				tGswEncryptB(cipher2, m2, alpha, key);
+				tLweHomMul(cipher1, cipher2, key->params);
+				if(m1 * m2 == tLweDecryptB(cipher1, &key->tlwe_key))
+					cnt++;
+			}
+			printf("m1 = %d ; m2 = %d ; among %d tests, %d successful\n", m1, m2, nb_tests, cnt);
+		}
+
+
 }
 
 

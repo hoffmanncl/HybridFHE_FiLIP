@@ -22,6 +22,12 @@ void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const
 }
 
 
+void	tLweEncryptB(TLweSample *result, const int32_t message, double alpha, const TLweKey *key)
+{
+	tLweSymEncryptT(result, message << 31, alpha, key);
+}
+
+
 int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)		
 {
 	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l]; // c is the first row of the last bloc
@@ -33,18 +39,9 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 }
 
 
-Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
+int32_t	tLweDecryptB(const TLweSample *cipher, const TLweKey *key)
 {
-	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l];
-	TorusPolynomial	*phase = new_TorusPolynomial(key->tlwe_params->N);
-	int32_t			deciphered;
-	int32_t			result;				// Should not overflow
-
-	tLwePhase(phase, c, &key->tlwe_key);
-	deciphered = tLweSymDecryptT(c, &key->tlwe_key, 2);
-	result = deciphered - phase->coefsT[0];
-
-	return result > 0 ? result : -result;
+	return modSwitchFromTorus32(tLweSymDecryptT(cipher, key, 2), 2);
 }
 
 
@@ -80,7 +77,7 @@ void	tGswHomAddMu(TGswSample *result, int32_t message, const TGswParams *params)
 }
 
 
-// result = result . sample - less noise increase if sample = enc(0)
+// result = result . sample - less noise growth if sample is the lower noise cipher
 void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params)
 {
 	// samples must have same parameters
@@ -88,6 +85,13 @@ void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *
 
 	for(int32_t i = 0 ; i < d ; i++)
 		tGswExternProduct(&result->all_sample[i], sample, &result->all_sample[i], params);
+}
+
+
+//result = result . sample - less noise growth if sample is the lower noise cipher
+void	tLweHomMul(TLweSample *result, const TGswSample *sample, const TGswParams *params)
+{
+	tGswExternProduct(result, sample, result, params);
 }
 
 
@@ -103,6 +107,21 @@ void	tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, c
 	deepcopy_tgsw(result, tmp);
 
 	free_TGswSample(tmp);
+}
+
+
+Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
+{
+	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l];
+	TorusPolynomial	*phase = new_TorusPolynomial(key->tlwe_params->N);
+	int32_t			deciphered;
+	int32_t			result;				// Should not overflow
+
+	tLwePhase(phase, c, &key->tlwe_key);
+	deciphered = tLweSymDecryptT(c, &key->tlwe_key, 2);
+	result = deciphered - phase->coefsT[0];
+
+	return result > 0 ? result : -result;
 }
 
 
