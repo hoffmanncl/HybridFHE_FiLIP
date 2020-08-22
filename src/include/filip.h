@@ -75,9 +75,10 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 // filip_server.cpp
 
 void		set_hom_whitening(TGswSample **h_whitening, int len);
-void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
+void		hom_dsm_filter(TLweSample *result, TGswSample **h_state);
 void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
-void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
+void		hom_FiLIP(TLweSample **output, TLweSample **input, int m_size, TGswSample **key, int k_size);
+TLweSample*	extract_tlwe(TGswSample *sample);
 void		hom_maj(TGswSample *result, TGswSample **h_state);
 void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
@@ -109,11 +110,13 @@ void		bench_filip_dsm();
 
 void		init_dsm_filter();
 void		init_thr_filter();
-void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
-void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
+void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TLweSample ***h_message, TLweSample ***h_cipher, int32_t k_size, int32_t m_size);
+void		free_tgsw(TGswSample **h_key, TLweSample **h_message, TLweSample **h_cipher, int32_t k_size, int32_t m_size);
 void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
-TGswSample**	allocate_tgsw_array(int size);
+TGswSample** allocate_tgsw_array(int size);
+TLweSample** allocate_tlwe_array(int size);
 void		free_tgsw_array(TGswSample **array, int size);
+void		free_tlwe_array(TLweSample **array, int size);
 void		display_tgsw_set(tgsw_vars *vars);
 
 

@@ -3,25 +3,25 @@
 
 
 
-void	hom_dsm_filter(TGswSample *result, TGswSample **h_state)
+void	hom_dsm_filter(TLweSample *result, TGswSample **h_state)
 {
-	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
+	TLweSample	*tmp = new_TLweSample(TGSW_PARAMS->tlwe_params);
 	int			i, j, k;
 	int			nb = 0;
 
-	deepcopy_tgsw(result, h_state[nb++]);
+	deepcopy_tlwe(result, extract_tlwe(h_state[nb++]));
 	for(i = 1 ; i < mf[0] ; i++)
-		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
+		tLweAddTo(result, extract_tlwe(h_state[nb++]), TGSW_PARAMS->tlwe_params);
 
 	for(i = 1 ; i < degree ; i++)
 		for(j = 0 ; j < mf[i] ; j++)
 		{
-			deepcopy_tgsw(tmp, h_state[nb++]);
+			deepcopy_tlwe(tmp, extract_tlwe(h_state[nb++]));
 			for(k = 1 ; k < i + 1 ; k++)
-				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
-			tGswHomAdd(result, tmp, TGSW_PARAMS);
+				tLweHomMul(tmp, h_state[nb++], TGSW_PARAMS);
+			tLweAddTo(result, tmp, TGSW_PARAMS->tlwe_params);
 		}
-	free_TGswSample(tmp);
+	free_TLweSample(tmp);
 }
 
 
@@ -35,10 +35,10 @@ void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 }
 
 
-void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size)
+void	hom_FiLIP(TLweSample **output, TLweSample **input, int m_size, TGswSample **key, int k_size)
 {
 	TGswSample	**h_state = allocate_tgsw_array(nb_var);
-	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
+	TLweSample	*tmp = new_TLweSample(TGSW_PARAMS->tlwe_params);
 	long		*indice = (long*)malloc(sizeof(long) * k_size);
 	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
 	int			i, j;
@@ -55,14 +55,20 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 			deepcopy_tgsw(h_state[j], key[indice[j]]);
 			tGswHomAddMu(h_state[j], whitening[j], TGSW_PARAMS);
 		}
-		deepcopy_tgsw(output[i], input[i]);
+		deepcopy_tlwe(output[i], input[i]);
 		hom_dsm_filter(tmp, h_state);
-		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
+		tLweAddTo(output[i], tmp, TGSW_PARAMS->tlwe_params);
 	}
 
 	free_tgsw_array(h_state, nb_var);
-	free_TGswSample(tmp);
+	free_TLweSample(tmp);
 	free(indice);
+}
+
+
+TLweSample*	extract_tlwe(TGswSample *sample)
+{
+	return &sample->all_sample[sample->k * sample->l];
 }
 
 
