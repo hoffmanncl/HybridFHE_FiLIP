@@ -112,7 +112,7 @@ void		init_thr_filter();
 void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
 void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
-TGswSample**	allocate_tgsw_array(int size);
+TGswSample** allocate_tgsw_array(int size);
 void		free_tgsw_array(TGswSample **array, int size);
 void		display_tgsw_set(tgsw_vars *vars);
 
