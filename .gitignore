@@ -2,7 +2,6 @@ callgrind.*
 .*.swp
 *.o
 doc
-filip_keys/
 filip
 !filip/
 test
