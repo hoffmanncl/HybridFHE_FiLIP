@@ -17,7 +17,7 @@ void	hom_dsm_filter(LweSample *result, LweSample *h_state)
 	{
 		if(nb == 1)
 			printf("nb : %d ; h_state[1] (op1) : %d ; res (op2) : %d ; ", nb, bootsSymDecrypt(h_state + nb, KEY), bootsSymDecrypt(result, KEY));
-		bootsXOR(result, h_state + nb, result, &KEY->cloud);
+		bootsXOR(result, result, h_state + nb, &KEY->cloud);
 		if(nb == 1)
 			printf("res : %d\n", bootsSymDecrypt(result, KEY));
 		nb++;
