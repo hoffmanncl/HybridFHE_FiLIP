@@ -18,9 +18,7 @@ int		main(int argc, char const *argv[])
 	init_lwe();
 	init_dsm_filter();
 
-	printf("LWE init OK\n");
-
-	int			k_size = 16384, m_size = 5, i;
+	int			k_size = 16384, m_size = 1, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
@@ -69,7 +67,7 @@ int		main(int argc, char const *argv[])
 
 void	init_lwe()
 {
-	PARAMS = new_default_gate_bootstrapping_parameters(128);
+	PARAMS = new_default_gate_bootstrapping_parameters(110);
 
 	uint32_t seed[] = { 314, 1592, 657 };
 	tfhe_random_generator_setSeed(seed,3);

@@ -9,9 +9,23 @@ void	hom_dsm_filter(LweSample *result, LweSample *h_state)
 	int			i, j, k;
 	int			nb = 0;
 
-	bootsCOPY(result, h_state + nb++, &KEY->cloud);
+	//printf("nb : %d ; h_state : %d ; ", nb, bootsSymDecrypt(h_state + nb, KEY));
+	bootsCOPY(result, h_state + nb, &KEY->cloud);
+	nb++;
+	//printf("res : %d\n", bootsSymDecrypt(result, KEY));
 	for(i = 1 ; i < mf[0] ; i++)
-		bootsXOR(result, result, h_state + nb++, &KEY->cloud);
+	{
+		if(nb == 1)
+			printf("nb : %d ; h_state[1] (op1) : %d ; res (op2) : %d ; ", nb, bootsSymDecrypt(h_state + nb, KEY), bootsSymDecrypt(result, KEY));
+		bootsXOR(result, h_state + nb, result, &KEY->cloud);
+		if(nb == 1)
+			printf("res : %d\n", bootsSymDecrypt(result, KEY));
+		nb++;
+
+	}
+	printf("\n");
+
+	printf("after linear monomials : %d\n", bootsSymDecrypt(result, KEY));
 
 	for(i = 1 ; i < degree ; i++)
 		for(j = 0 ; j < mf[i] ; j++)
@@ -56,6 +70,12 @@ void	hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, 
 			h_state[j].b += whitening[j] << 31; //Noiseless plain add
 		}
 		bootsCOPY(output + i, input + i, &KEY->cloud);
+
+		printf("h_state : ");
+		for(int k = 0 ; k < 10 ; k++)
+			printf("%d", bootsSymDecrypt(h_state + k, KEY));
+		printf("\n");
+
 		hom_dsm_filter(tmp, h_state);
 		bootsXOR(output + i, output + i, tmp, &KEY->cloud);
 	}
