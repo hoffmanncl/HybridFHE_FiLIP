@@ -67,7 +67,7 @@ void	hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, 
 		for(j = 0 ; j < nb_var ; j++)
 		{
 			bootsCOPY(h_state +j, key + indice[j], &KEY->cloud);
-			h_state[j].b += whitening[j] << 31; //Noiseless plain add
+			//h_state[j].b += whitening[j] << 31; //Noiseless plain add
 		}
 		bootsCOPY(output + i, input + i, &KEY->cloud);
 
