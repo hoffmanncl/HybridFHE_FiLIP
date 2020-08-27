@@ -3,42 +3,42 @@
 
 
 
-void	hom_dsm_filter(TGswSample *result, TGswSample **h_state)
+void	hom_dsm_filter(LweSample *result, LweSample *h_state)
 {
-	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
+	LweSample	*tmp = new_gate_bootstrapping_ciphertext(PARAMS);
 	int			i, j, k;
 	int			nb = 0;
 
-	deepcopy_tgsw(result, h_state[nb++]);
+	bootsCOPY(result, h_state + nb++, &KEY->cloud);
 	for(i = 1 ; i < mf[0] ; i++)
-		tGswHomAdd(result, h_state[nb++], TGSW_PARAMS);
+		bootsXOR(result, result, h_state + nb++, &KEY->cloud);
 
 	for(i = 1 ; i < degree ; i++)
 		for(j = 0 ; j < mf[i] ; j++)
 		{
-			deepcopy_tgsw(tmp, h_state[nb++]);
+			bootsCOPY(tmp, h_state + nb++, &KEY->cloud);
 			for(k = 1 ; k < i + 1 ; k++)
-				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
-			tGswHomAdd(result, tmp, TGSW_PARAMS);
+				bootsAND(tmp, tmp, h_state + nb++, &KEY->cloud);
+			bootsXOR(result, result, tmp, &KEY->cloud);
 		}
-	free_TGswSample(tmp);
+	delete_gate_bootstrapping_ciphertext(tmp);
 }
 
 
-void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
+/*void	hom_thr_filter(TGswSample *result, TGswSample **h_state)
 {
 	deepcopy_tgsw(result, h_state[0]);
 	for(int32_t i = 1 ; i < xor_vars_nb ; i++)
 		tGswHomAdd(result, h_state[i], TGSW_PARAMS);
 	noises[0][noise_cnt] = getTGswCipherNoise(result, TGSW_KEY);
 	hom_maj(result, h_state + xor_vars_nb);
-}
+}*/
 
 
-void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size)
+void	hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, int k_size)
 {
-	TGswSample	**h_state = allocate_tgsw_array(nb_var);
-	TGswSample	*tmp = new_TGswSample(TGSW_PARAMS);
+	LweSample	*h_state = new_gate_bootstrapping_ciphertext_array(nb_var, PARAMS);
+	LweSample	*tmp = new_gate_bootstrapping_ciphertext(PARAMS);
 	long		*indice = (long*)malloc(sizeof(long) * k_size);
 	long		*whitening = (long*)malloc(sizeof(long) * nb_var);
 	int			i, j;
@@ -52,20 +52,21 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 		set_whitening(whitening, nb_var);
 		for(j = 0 ; j < nb_var ; j++)
 		{
-			deepcopy_tgsw(h_state[j], key[indice[j]]);
-			tGswHomAddMu(h_state[j], whitening[j], TGSW_PARAMS);
+			bootsCOPY(h_state +j, key + indice[j], &KEY->cloud);
+			h_state[j].b += whitening[j] << 31; //Noiseless plain add
 		}
-		deepcopy_tgsw(output[i], input[i]);
+		bootsCOPY(output + i, input + i, &KEY->cloud);
 		hom_dsm_filter(tmp, h_state);
-		tGswHomAdd(output[i], tmp, TGSW_PARAMS);
+		bootsXOR(output + i, output + i, tmp, &KEY->cloud);
 	}
 
-	free_tgsw_array(h_state, nb_var);
-	free_TGswSample(tmp);
+	delete_gate_bootstrapping_ciphertext_array(nb_var, h_state);
+	delete_gate_bootstrapping_ciphertext(tmp);
 	free(indice);
+	free(whitening);
 }
 
-
+/*
 // result = result ^ MAJ(h_state)
 void	hom_maj(TGswSample *result, TGswSample **h_state)
 {
@@ -248,3 +249,4 @@ void	hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSamp
 	free_TGswSample(tmp);
 	free(indice);
 }
+*/

@@ -2,86 +2,79 @@
 #include	"include/tgsw_operations.h"
 
 
-TGswParams	*TGSW_PARAMS;
-TGswKey		*TGSW_KEY;
-double		alpha;
 int			degree;
 long		*mf;
 int32_t		xor_vars_nb;
 int32_t		thr_vars_nb;
 int			nb_var;
 
-int32_t		**noises;
-int			noise_cnt;
-
+TFheGateBootstrappingParameterSet*	PARAMS;
+TFheGateBootstrappingSecretKeySet*	KEY;
+TFheGateBootstrappingCloudKeySet*	CLOUD_KEY;
 
 
 int		main(int argc, char const *argv[])
 {
-	bench_filip_dsm();
-
-	return 0;
-}
-
-
-void	bench_filip_dsm()
-{
+	init_lwe();
 	init_dsm_filter();
 
-	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
+	printf("LWE init OK\n");
+
+	int			k_size = 16384, m_size = 5, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
 	long		*cipher = (long*)malloc(sizeof(long) * m_size);
 
-	TGswSample	**h_key, **h_message, **h_cipher;
-	tgsw_vars	*variables_sets = (tgsw_vars*)malloc(sizeof(tgsw_vars) * nb_sets);
+	LweSample*	h_key = new_gate_bootstrapping_ciphertext_array(k_size, PARAMS);
+	LweSample*	h_message = new_gate_bootstrapping_ciphertext_array(m_size, PARAMS);
+	LweSample*	h_cipher = new_gate_bootstrapping_ciphertext_array(m_size, PARAMS);
 
 	clock_t		inter;
 
-
-	printf("\nm_size = %d ; k_size = %d ; mf = [", m_size, k_size);
-	for(i = 0 ; i < degree - 1 ; i++)
-		printf("%ld, ", mf[i]);
-	printf("%ld]\n\n\n", mf[degree - 1]);
-
+	new_random_binary_sequence(key, k_size);
 	new_random_binary_sequence(message, m_size);
-	init_tgsw_sets(variables_sets, nb_sets);
+	for(i = 0 ; i < k_size ; i++)
+		bootsSymEncrypt(h_key + i, key[i], KEY);
+	for(i = 0 ; i < m_size ; i++)
+		bootsSymEncrypt(h_message + i, message[i], KEY);
 
-	for(int s = 0 ; s < nb_sets ; s++)
-	{
-		init_tgsw(variables_sets + s, &h_key, &h_message, &h_cipher, k_size, m_size);
-		load_filip_key(key, h_key, k_size, (variables_sets + s)->alpha);
-		display_tgsw_set(variables_sets + s);
+	reset_prng();
+	FiLIP(cipher, message, m_size, key, k_size);
+	reset_prng();
 
-		for(i = 0 ; i < m_size ; i++)
-			tGswEncryptB(h_message[i], message[i], alpha, TGSW_KEY);
+	inter = clock();
+	hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+	inter = clock() - inter;
 
-		reset_prng();
-		FiLIP(cipher, message, m_size, key, k_size);
-		reset_prng();
-		inter = clock();
-		hom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
-		inter = clock() - inter;
+	printf("FiLIP homomorphic encryption time = %.2f\n", (double)inter / (CLOCKS_PER_SEC * m_size));
 
-		printf("FiLIP homomorphic encryption time = %.2f\n", (double)inter / (CLOCKS_PER_SEC * m_size));
+	for(i = 0 ; i < m_size ; i++)
+		if(bootsSymDecrypt(h_cipher + i, KEY) != cipher[i])
+			break;
+	if(i != m_size)
+		printf("Error in FiLIP homomorphic evaluation :x\n");
+	else
+		printf("Homomorphic evaluation successful !\n");
 
-		for(i = 0 ; i < m_size ; i++)
-			if(tGswDecryptB(h_cipher[i], TGSW_KEY) != cipher[i])
-				break;
-		if(i != m_size)
-			printf("Error in FiLIP homomorphic evaluation :x\n");
-		else
-			printf("Homomorphic evaluation successful !\n");
-
-		free_tgsw(h_key, h_message, h_cipher, k_size, m_size);
-	}
-
+	delete_gate_bootstrapping_ciphertext_array(k_size, h_key);
+	delete_gate_bootstrapping_ciphertext_array(m_size, h_message);
+	delete_gate_bootstrapping_ciphertext_array(m_size, h_cipher);
 	free(key);
 	free(message);
-	free(cipher);	
+	free(cipher);
+    return 0;
 }
 
+
+void	init_lwe()
+{
+	PARAMS = new_default_gate_bootstrapping_parameters(128);
+
+	uint32_t seed[] = { 314, 1592, 657 };
+	tfhe_random_generator_setSeed(seed,3);
+	KEY = new_random_gate_bootstrapping_secret_keyset(PARAMS);
+}
 
 void	init_dsm_filter()
 {
@@ -109,100 +102,3 @@ void	init_thr_filter()
 	thr_vars_nb = 7;
 	nb_var = xor_vars_nb + thr_vars_nb;
 }
-
-
-void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
-{
-	TGSW_PARAMS = new_TGswParams(vars->l, 1, new_TLweParams(vars->N, vars->k, 0., 1.));
-	TGSW_KEY = new_random_key(TGSW_PARAMS);
-
-	*h_key = allocate_tgsw_array(k_size);
-	*h_message = allocate_tgsw_array(m_size);
-	*h_cipher = allocate_tgsw_array(m_size);
-}
-
-
-void	free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size)
-{
-	free_TGswParams(TGSW_PARAMS);
-	free_TGswKey(TGSW_KEY);
-
-	free_tgsw_array(h_key, k_size);
-	free_tgsw_array(h_message, m_size);
-	free_tgsw_array(h_cipher, m_size);
-}
-
-
-TGswSample**	allocate_tgsw_array(int size)
-{
-	TGswSample	**array = (TGswSample**)malloc(sizeof(TGswSample*) * size);
-
-	for(int i = 0 ; i < size ; i++)
-		array[i] = new_TGswSample(TGSW_PARAMS);
-	return array;
-}
-
-
-void	free_tgsw_array(TGswSample **array, int size)
-{
-	for(int i = 0 ; i < size ; i++)
-		free_TGswSample(array[i]);
-	free(array);
-}
-
-
-void	display_tgsw_set(tgsw_vars *vars)
-{
-	printf("Tgsw parameters : k = %d ; N = %d ; l = %d ; alpha = %e\n\n", vars->k, vars->N, vars->l, vars->alpha);
-}
-
-
-void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
-{
-	sets->k = 1;
-	sets->N = 512;
-	sets->l = 24;
-	sets->alpha = 1e-9;
-
-	/*(sets + 1)->k = 1;
-	(sets + 1)->N = 512;
-	(sets + 1)->l = 64;
-	(sets + 1)->alpha = 1e-4;
-
-	(sets + 2)->k = 2;
-	(sets + 2)->N = 256;
-	(sets + 2)->l = 32;
-	(sets + 2)->alpha = 1e-6;
-
-	(sets + 3)->k = 2;
-	(sets + 3)->N = 256;
-	(sets + 3)->l = 64;
-	(sets + 3)->alpha = 1e-4;*/
-}
-
-
-/*	init_thr_filter();
-	TGSW_PARAMS = new_TGswParams(32, 1, new_TLweParams(512, 1, 0., 1.));
-	TGSW_KEY = new_random_key(TGSW_PARAMS);
-
-	long		*state = (long*)malloc(sizeof(long) * nb_var);
-	TGswSample	**h_state = allocate_tgsw_array(nb_var);
-	double		alpha = 1e-9;
-	int			i, j, result, noise_size = 1000;
-	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
-
-	noises = (int**)malloc(sizeof(int*) * (thr_vars_nb + 1));
-	for(i = 0 ; i < thr_vars_nb + 1 ; i++)
-		noises[i] = (int*)malloc(sizeof(int) * noise_size);
-	noise_cnt = 0;
-
-	for(j = 0 ; j < noise_size ; j++)
-	{
-		new_random_binary_sequence(state, nb_var);
-		for(i = 0 ; i < nb_var ; i++)
-			tGswEncryptB(h_state[i], state[i], alpha, TGSW_KEY);
-		hom_thr_filter(h_result, h_state);
-		noise_cnt++;
-	}
-	for(i = 0 ; i < thr_vars_nb + 1 ; i++)
-		printf("i = %2d ; var = %Le\n", i, get_variance(noises[i], noise_size));*/

@@ -1,73 +1,56 @@
 #include	"include/tgsw_operations.h"
 
 
-void	tGswEncrypt_fft(TGswSampleFFT *result, const int32_t message, double alpha, const TGswKey *key)
+TorusPolynomial*	array2fftpolynomial(int32_t *message, int32_t N)
 {
-	TGswSample	*zero_sample = new_TGswSample(key->params);
+	TorusPolynomial			*message_poly = array2toruspolynomial(message, N);
+	LagrangeHalfCPolynomial	*fft_poly;
 
-	tGswEncryptZero(result, alpha, key);
-	tGswToFFTConvert(result, zero_sample, key->params);
-	if(message == 1)
-		
-	free_TGswSample(zero_sample);
+	TorusPolynomial_ifft(fft_poly, message_poly);
+	fftpoly_copy(message_poly, fft_poly);
+	free_LagrangeHalfCPolynomial(fft_poly);
+
+	return message_poly;
 }
 
 
-int32_t	tGswDecrypt_fft(const TGswSampleFFT *cipher, const TGswKey *key)
+TorusPolynomial*	array2toruspolynomial(int32_t *messages, int32_t N)
 {
+	TorusPolynomial	*new_poly = new_TorusPolynomial(N);
 
+	for(int i = 0 ; i < N ; i++)
+		new_poly->coefsT[i] = messages[i]<<31;
+
+	return new_poly;
 }
 
 
-Torus32	getTGswCipherNoise_fft(const TGswSampleFFT *cipher, const TGswKey *key)
+void				fftpoly_copy(TorusPolynomial *result, LagrangeHalfCPolynomial *poly)
 {
-
+	for(int i = 0 ; i < result->N ; i++)
+		result->coefsT[i] = *((Torus32*)(poly->data) + i);	
 }
 
 
-void	tGswHomAdd_fft(TGswSampleFFT *result, const TGswSampleFFT *sample, const TGswParams *params)
+// transorm an array of message into its corresponding batched arrays of size N
+int32_t**			message2message_arrays(long *messages, int32_t size, int32_t N)
 {
+	int32_t	message_arrays_size = size / N + 1;
+	int32_t	**message_arrays = (int32_t**)malloc(sizeof(int*) * message_arrays_size);
+	int32_t	i = 0, j, buf;
 
-}
+	for(i = 0 ; i < message_arrays_size ; i++)
+	{
+		message_arrays[i] = (int*)malloc(sizeof(int) * N);
+		buf = i * N;
+		for(j = 0 ; j < N ; j++)
+		{
+			if(i + j < size)
+				message_arrays[i][j] = messages[buf + j];
+			else
+				message_arrays[i][j] = 0;
+		}
+	}
 
-
-void	tGswHomSub_fft(TGswSampleFFT *result, const TGswSampleFFT *sample, const TGswParams *params)
-{
-
-}
-
-
-void	tGswHomAddMu_fft(TGswSampleFFT *result, int32_t message, const TGswParams *params)
-{
-
-}
-
-
-void	tGswHomMul_fft(TGswSampleFFT *result, const TGswSampleFFT *sample, const TGswParams *params)
-{
-
-}
-
-
-void	tGswHomMux_fft(TGswSampleFFT *result, const TGswSampleFFT *c, const TGswSampleFFT *s1, const TGswSampleFFT *s2, const TGswParams *params)
-{
-
-}
-
-
-void	deepcopy_tgsw_fft(TGswSampleFFT *copy, const TGswSampleFFT *sample)
-{
-
-}
-
-
-void	deepcopy_tlwe_sample_fft(TLweSampleFFT *copy, const TLweSampleFFT *sample)
-{
-
-}
-
-
-void	deepcopy_torus_polynomial_fft(LagrangeHalfCPolynomial *copy, const LagrangeHalfCPolynomial *poly)
-{
-
+	return message_arrays;
 }

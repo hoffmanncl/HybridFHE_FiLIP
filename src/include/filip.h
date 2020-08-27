@@ -27,17 +27,15 @@
 using namespace std;
 
 
-extern TGswParams	*TGSW_PARAMS;
-extern TGswKey		*TGSW_KEY;
-extern double		alpha;
+extern TFheGateBootstrappingParameterSet*	PARAMS;
+extern TFheGateBootstrappingSecretKeySet*	KEY;
+extern TFheGateBootstrappingCloudKeySet*	CLOUD_KEY;
 extern int			degree;
 extern long			*mf;
 extern int32_t		xor_vars_nb;
 extern int32_t		thr_vars_nb;
 extern int			nb_var;
 
-extern int32_t		**noises;
-extern int			noise_cnt;
 
 typedef struct	tgsw_vars
 {
@@ -75,9 +73,9 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 // filip_server.cpp
 
 void		set_hom_whitening(TGswSample **h_whitening, int len);
-void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
+void		hom_dsm_filter(LweSample *result, LweSample *h_state);
 void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
-void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
+void		hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, int k_size);
 void		hom_maj(TGswSample *result, TGswSample **h_state);
 void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
@@ -109,6 +107,7 @@ void		bench_filip_dsm();
 
 void		init_dsm_filter();
 void		init_thr_filter();
+void		init_lwe();
 void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
 void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
