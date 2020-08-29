@@ -32,13 +32,12 @@ long		dsm_filter(long *state)
 	//Computation of Linear monomials
 	for(i = 0 ; i < mf[0] ; i++)
 	{
-		printf("nb = %ld ; state : %ld ; ", nb, state[i]);
+		printf("%ld + %ld = ", output, state[nb]);
 		output ^= state[nb++];
-		printf("res : %ld\n", output);
+		printf("%ld\n", output);
 	}
-	printf("\n");
 
-	printf("after linear monomials : %ld\n\n\n", output);
+	printf("After linear operations : %ld\n", output);
 
 	//Computation of higher degree monomials
 	for(i = 1 ; i < degree ; i++)
@@ -90,8 +89,8 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size)
 			state[j] = key[indice[j]] ^ whitening[j];
 
 		printf("state : ");
-		for(int k = 0 ; k < 10 ; k++)
-			printf("%ld", state[k]);
+		for(j = 0 ; j < 32 ; j++)
+			printf("%ld", state[j]);
 		printf("\n");
 
 		output[i] = input[i] ^ dsm_filter(state);
@@ -100,4 +99,5 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size)
 	free(state);
 	free(indice);
 	free(whitening);
+	printf("\n");
 }

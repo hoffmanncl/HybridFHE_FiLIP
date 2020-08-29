@@ -9,23 +9,15 @@ void	hom_dsm_filter(LweSample *result, LweSample *h_state)
 	int			i, j, k;
 	int			nb = 0;
 
-	//printf("nb : %d ; h_state : %d ; ", nb, bootsSymDecrypt(h_state + nb, KEY));
-	bootsCOPY(result, h_state + nb, &KEY->cloud);
-	nb++;
-	//printf("res : %d\n", bootsSymDecrypt(result, KEY));
+	bootsCOPY(result, h_state + nb++, &KEY->cloud);
 	for(i = 1 ; i < mf[0] ; i++)
 	{
-		if(nb == 1)
-			printf("nb : %d ; h_state[1] (op1) : %d ; res (op2) : %d ; ", nb, bootsSymDecrypt(h_state + nb, KEY), bootsSymDecrypt(result, KEY));
-		bootsXOR(result, result, h_state + nb, &KEY->cloud);
-		if(nb == 1)
-			printf("res : %d\n", bootsSymDecrypt(result, KEY));
-		nb++;
-
+		printf("%d + %d = ", bootsSymDecrypt(result, KEY), bootsSymDecrypt(h_state + nb, KEY));
+		bootsXOR(result, result, h_state + nb++, &KEY->cloud);
+		printf("%d\n", bootsSymDecrypt(result, KEY));
 	}
-	printf("\n");
 
-	printf("after linear monomials : %d\n", bootsSymDecrypt(result, KEY));
+	printf("After linear operations : %d\n", bootsSymDecrypt(result, KEY));
 
 	for(i = 1 ; i < degree ; i++)
 		for(j = 0 ; j < mf[i] ; j++)
@@ -66,24 +58,27 @@ void	hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, 
 		set_whitening(whitening, nb_var);
 		for(j = 0 ; j < nb_var ; j++)
 		{
-			bootsCOPY(h_state +j, key + indice[j], &KEY->cloud);
-			//h_state[j].b += whitening[j] << 31; //Noiseless plain add
+			if(whitening[j])
+				bootsNOT(h_state + j, key + indice[j], &KEY->cloud);
+			else
+				bootsCOPY(h_state + j, key + indice[j], &KEY->cloud);
 		}
-		bootsCOPY(output + i, input + i, &KEY->cloud);
 
 		printf("h_state : ");
-		for(int k = 0 ; k < 10 ; k++)
+		for(int k = 0 ; k < 32 ; k++)
 			printf("%d", bootsSymDecrypt(h_state + k, KEY));
 		printf("\n");
 
 		hom_dsm_filter(tmp, h_state);
-		bootsXOR(output + i, output + i, tmp, &KEY->cloud);
+		bootsXOR(output + i, input + i, tmp, &KEY->cloud);
 	}
 
 	delete_gate_bootstrapping_ciphertext_array(nb_var, h_state);
 	delete_gate_bootstrapping_ciphertext(tmp);
 	free(indice);
 	free(whitening);
+
+	printf("\n");
 }
 
 /*

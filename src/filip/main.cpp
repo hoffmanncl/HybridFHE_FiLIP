@@ -18,7 +18,7 @@ int		main(int argc, char const *argv[])
 	init_lwe();
 	init_dsm_filter();
 
-	int			k_size = 16384, m_size = 1, i;
+	int			k_size = 16384, m_size = 20, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
