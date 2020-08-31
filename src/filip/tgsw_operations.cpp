@@ -33,8 +33,10 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 	TLweSample		*c = &cipher->all_sample[cipher->k * cipher->l]; // c is the first row of the last bloc
 	int32_t			result;
 
-	result = tLweSymDecryptT(c, &key->tlwe_key, 2);
-	result = modSwitchFromTorus32(result, 2);
+	result = tLweSymDecryptT(c, &key->tlwe_key, key->params->Bg);
+	result = modSwitchFromTorus32(result, key->params->Bg);
+	if(result > 1)
+		printf("Decryption failed\n");
 	return result;
 }
 

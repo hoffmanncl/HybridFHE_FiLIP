@@ -8,7 +8,7 @@
 #include	"include/tgsw_operations.h"
 
 
-int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
+void		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tlwe_encdec(const TGswKey *key, double alpha, int32_t nb_tests);
 int			test_hom_add(const TGswKey *key, double alpha, int32_t nb_tests);
 void		test_tGswHomSub(const TGswKey *key, double alpha, int32_t nb_tests);
@@ -32,12 +32,12 @@ void		test_write_read_file(const TGswKey *key, double alpha);
 int			main(int argc, char const *argv[])
 {
 	srand(time(NULL));
-	TGswParams *params = new_TGswParams(32, 1, new_TLweParams(512, 1, 0., 1.));
+	TGswParams *params = new_TGswParams(3, 10, new_TLweParams(512, 1, 0., 1.));
 	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max
 	TGswKey		*key = new_random_key(params);
 	double		alpha = 1e-9;
 
-	test_tLweHomMul(key, alpha, 1000);
+	test_encryption_decryption(key, alpha, 1000);
 	
 	delete_TGswParams(params);
 	delete_TGswKey(key);
@@ -45,14 +45,12 @@ int			main(int argc, char const *argv[])
 }
 
 
-int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
+void		test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_tests)
 {
 	printf("test_encryption_decryption - noise parameter = %e - nb_tests = %d\n", alpha, nb_tests);
 
 	TGswSample	*cipher = new_TGswSample(key->params);
 	int32_t		success_count;
-	int			ret = 1;
-
 	for(int m = 0 ; m < 2 ; m++)
 	{
 		success_count = 0;
@@ -63,12 +61,9 @@ int			test_encryption_decryption(const TGswKey *key, double alpha, int32_t nb_te
 				success_count++;
 		}
 		printf("m = %d - Among %d tests, %d successful\n", m, nb_tests, success_count);
-		if(success_count < nb_tests)
-			ret = 0;
 	}
 	printf("\n");
 	delete_TGswSample(cipher);
-	return ret;
 }
 
 

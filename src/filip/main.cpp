@@ -161,7 +161,7 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 {
 	sets->k = 1;
 	sets->N = 512;
-	sets->l = 24;
+	sets->l = 20;
 	sets->alpha = 1e-9;
 
 	/*(sets + 1)->k = 1;
