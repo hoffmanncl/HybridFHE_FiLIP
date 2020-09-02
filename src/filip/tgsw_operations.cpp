@@ -117,7 +117,7 @@ void	tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, c
 	tGswHomAdd(tmp, s1, params);
 	deepcopy_tgsw(result, tmp);
 
-	free_TGswSample(tmp);
+	delete_TGswSample(tmp);
 }
 
 

@@ -21,7 +21,7 @@ void	hom_dsm_filter(TGswSample *result, TGswSample **h_state)
 				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
 		}
-	free_TGswSample(tmp);
+	delete_TGswSample(tmp);
 }
 
 
@@ -60,7 +60,7 @@ void	hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample *
 	}
 
 	free_tgsw_array(h_state, nb_var);
-	free_TGswSample(tmp);
+	delete_TGswSample(tmp);
 	free(indice);
 }
 
@@ -76,7 +76,7 @@ void	hom_maj(TGswSample *result, TGswSample **h_state)
 	rhombus_middle_line(previous_layer, current_layer, h_state);
 	rhombus_lower_half(previous_layer, current_layer, h_state);
 
-	deepcopy_tgsw(result, current_layer[0]);
+	tGswHomAdd(result, current_layer[0], TGSW_PARAMS);
 
 	free_tgsw_array(current_layer, thr_vars_nb / 2 + 1);
 	free_tgsw_array(previous_layer, thr_vars_nb / 2 + 1);
@@ -90,7 +90,6 @@ void	rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer,
 	deepcopy_tgsw(current_layer[0], h_state[0]);
 	tGswHomAddMu(current_layer[0], 1, TGSW_PARAMS);
 	deepcopy_tgsw(current_layer[1], h_state[0]);
-
 
 	for(i = 1 ; i < thr_vars_nb / 2 ; i++)
 	{

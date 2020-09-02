@@ -53,10 +53,10 @@ long		thr_filter(long *state)
 
 	for(i = 0 ; i < xor_vars_nb ; i++)
 		result ^= state[i];
+
 	for(i = 0 ; i < thr_vars_nb ; i++)
 		cnt += state[xor_vars_nb + i];
-	result ^= cnt > xor_vars_nb / 2;
-
+	result ^= (cnt > thr_vars_nb / 2) ? 1 : 0;
 	return result;
 
 }

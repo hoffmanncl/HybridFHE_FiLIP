@@ -22,7 +22,7 @@ int		main(int argc, char const *argv[])
 	long		*state = (long*)malloc(sizeof(long) * nb_var);
 	TGswSample	**h_state = allocate_tgsw_array(nb_var);
 	double		alpha = 1e-9;
-	int			i, j, result, cnt = 0, nb_tests = 10;
+	int			i, j, result, cnt = 0, nb_tests = 100;
 	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
 
 	for(j = 0 ; j < nb_tests ; j++)
@@ -33,8 +33,10 @@ int		main(int argc, char const *argv[])
 		hom_thr_filter(h_result, h_state);
 		if(tGswDecryptB(h_result, TGSW_KEY) == thr_filter(state))
 			cnt++;
+		else
+			printf("%d : FAIL\n", j);
 	}
-	printf("Among %d tests, %d succesful.\n", nb_tests, cnt);
+	printf("Among %d tests, %d successful.\n", nb_tests, cnt);
 
 	return 0;
 }
@@ -121,8 +123,8 @@ void	init_dsm_filter()
 
 void	init_thr_filter()
 {
-	xor_vars_nb = 9;
-	thr_vars_nb = 7;
+	xor_vars_nb = 81;
+	thr_vars_nb = 63;
 	nb_var = xor_vars_nb + thr_vars_nb;
 }
 
@@ -140,8 +142,8 @@ void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TG
 
 void	free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size)
 {
-	free_TGswParams(TGSW_PARAMS);
-	free_TGswKey(TGSW_KEY);
+	delete_TGswParams(TGSW_PARAMS);
+	delete_TGswKey(TGSW_KEY);
 
 	free_tgsw_array(h_key, k_size);
 	free_tgsw_array(h_message, m_size);
@@ -162,7 +164,7 @@ TGswSample**	allocate_tgsw_array(int size)
 void	free_tgsw_array(TGswSample **array, int size)
 {
 	for(int i = 0 ; i < size ; i++)
-		free_TGswSample(array[i]);
+		delete_TGswSample(array[i]);
 	free(array);
 }
 
