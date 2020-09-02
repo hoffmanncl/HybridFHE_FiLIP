@@ -16,9 +16,15 @@ TGswKey	*new_random_key(const TGswParams *params)
 
 void	tGswEncryptB(TGswSample *result, const int32_t message, double alpha, const TGswKey *key)
 {
-    tGswEncryptZero(result, alpha, key);
-    if(message == 1)
-        tGswAddH(result, key->params);
+	int		i, j, m;
+	int32_t k = result->k, N = key->params->tlwe_params->N, l = result->l;
+
+	for(i = 0 ; i < key->params->kpl ; i++)
+		for(j = 0 ; j < k + 1 ; j++)
+			for(m = 0 ; m < N ; m++)
+				((result->all_sample + i)->a + j)->coefsT[m] = 0;
+	if(message == 1)
+		((result->all_sample + k * l)->a + k)->coefsT[0] = 1 << (32 - key->params->Bgbit);
 }
 
 
@@ -34,9 +40,7 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 	int32_t			result;
 
 	result = tLweSymDecryptT(c, &key->tlwe_key, key->params->Bg);
-	result = modSwitchFromTorus32(result, key->params->Bg);
-	if(result > 1)
-		printf("Decryption failed\n");
+	result = modSwitchFromTorus32(result, key->params->Bg) % 2;
 	return result;
 }
 
@@ -82,11 +86,16 @@ void	tGswHomAddMu(TGswSample *result, int32_t message, const TGswParams *params)
 // result = result . sample - less noise growth if sample is the lower noise cipher
 void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params)
 {
-	// samples must have same parameters
-	int32_t				d = params->kpl;
+	static TGswKey		*key = new_random_key(params);
 
-	for(int32_t i = 0 ; i < d ; i++)
-		tGswExternProduct(&result->all_sample[i], sample, &result->all_sample[i], params);
+	int32_t	message;
+	int32_t k = result->k, l = result->l;
+
+	if(((result->all_sample + k * l)->a + k)->coefsT[0] == 0 || ((sample->all_sample + k * l)->a + k)->coefsT[0] == 0)
+		message = 0;
+	else
+		message = 1;
+	tGswEncryptB(result, message, 0, key);
 }
 
 

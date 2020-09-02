@@ -11,14 +11,30 @@ int32_t		xor_vars_nb;
 int32_t		thr_vars_nb;
 int			nb_var;
 
-int32_t		**noises;
-int			noise_cnt;
-
 
 
 int		main(int argc, char const *argv[])
 {
-	bench_filip_dsm();
+	init_thr_filter();
+	TGSW_PARAMS = new_TGswParams(24, 1, new_TLweParams(512, 1, 0., 1.));
+	TGSW_KEY = new_random_key(TGSW_PARAMS);
+
+	long		*state = (long*)malloc(sizeof(long) * nb_var);
+	TGswSample	**h_state = allocate_tgsw_array(nb_var);
+	double		alpha = 1e-9;
+	int			i, j, result, cnt = 0, nb_tests = 10;
+	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
+
+	for(j = 0 ; j < nb_tests ; j++)
+	{
+		new_random_binary_sequence(state, nb_var);
+		for(i = 0 ; i < nb_var ; i++)
+			tGswEncryptB(h_state[i], state[i], alpha, TGSW_KEY);
+		hom_thr_filter(h_result, h_state);
+		if(tGswDecryptB(h_result, TGSW_KEY) == thr_filter(state))
+			cnt++;
+	}
+	printf("Among %d tests, %d succesful.\n", nb_tests, cnt);
 
 	return 0;
 }
@@ -179,30 +195,3 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 	(sets + 3)->l = 64;
 	(sets + 3)->alpha = 1e-4;*/
 }
-
-
-/*	init_thr_filter();
-	TGSW_PARAMS = new_TGswParams(32, 1, new_TLweParams(512, 1, 0., 1.));
-	TGSW_KEY = new_random_key(TGSW_PARAMS);
-
-	long		*state = (long*)malloc(sizeof(long) * nb_var);
-	TGswSample	**h_state = allocate_tgsw_array(nb_var);
-	double		alpha = 1e-9;
-	int			i, j, result, noise_size = 1000;
-	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
-
-	noises = (int**)malloc(sizeof(int*) * (thr_vars_nb + 1));
-	for(i = 0 ; i < thr_vars_nb + 1 ; i++)
-		noises[i] = (int*)malloc(sizeof(int) * noise_size);
-	noise_cnt = 0;
-
-	for(j = 0 ; j < noise_size ; j++)
-	{
-		new_random_binary_sequence(state, nb_var);
-		for(i = 0 ; i < nb_var ; i++)
-			tGswEncryptB(h_state[i], state[i], alpha, TGSW_KEY);
-		hom_thr_filter(h_result, h_state);
-		noise_cnt++;
-	}
-	for(i = 0 ; i < thr_vars_nb + 1 ; i++)
-		printf("i = %2d ; var = %Le\n", i, get_variance(noises[i], noise_size));*/

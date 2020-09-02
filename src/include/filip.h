@@ -83,9 +83,6 @@ void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer
 void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 
-void		hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
-void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises);
-
 
 // file_management.cpp
 
