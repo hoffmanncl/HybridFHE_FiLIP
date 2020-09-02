@@ -34,9 +34,7 @@ int32_t	tGswDecryptB(const TGswSample *cipher, const TGswKey *key)
 	int32_t			result;
 
 	result = tLweSymDecryptT(c, &key->tlwe_key, key->params->Bg);
-	result = modSwitchFromTorus32(result, key->params->Bg);
-	if(result > 1)
-		printf("Decryption failed\n");
+	result = modSwitchFromTorus32(result, key->params->Bg) % 2;
 	return result;
 }
 
