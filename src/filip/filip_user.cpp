@@ -51,12 +51,22 @@ long		thr_filter(long *state)
 	int32_t	i, cnt = 0;
 	long	result = 0;
 
+	printf("plain state : ");
+	for(i = 0 ; i < xor_vars_nb ; i++)
+		printf("%ld", state[i]);
+	printf(" ");
+	for(i = xor_vars_nb ; i < nb_var ; i++)
+		printf("%ld", state[i]);
+	printf("\n");
+
 	for(i = 0 ; i < xor_vars_nb ; i++)
 		result ^= state[i];
 
 	for(i = 0 ; i < thr_vars_nb ; i++)
 		cnt += state[xor_vars_nb + i];
 	result ^= (cnt > thr_vars_nb / 2) ? 1 : 0;
+
+	printf("output : %ld\n\n\n", result);
 	return result;
 
 }

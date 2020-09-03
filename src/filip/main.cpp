@@ -15,14 +15,15 @@ int			nb_var;
 
 int		main(int argc, char const *argv[])
 {
-	init_thr_filter();
+	bench_filip_dsm();
+	/*init_thr_filter();
 	TGSW_PARAMS = new_TGswParams(24, 1, new_TLweParams(512, 1, 0., 1.));
 	TGSW_KEY = new_random_key(TGSW_PARAMS);
 
 	long		*state = (long*)malloc(sizeof(long) * nb_var);
 	TGswSample	**h_state = allocate_tgsw_array(nb_var);
 	double		alpha = 1e-9;
-	int			i, j, result, cnt = 0, nb_tests = 100;
+	int			i, j, result, cnt = 0, nb_tests = 3;
 	TGswSample	*h_result = new_TGswSample(TGSW_PARAMS);
 
 	for(j = 0 ; j < nb_tests ; j++)
@@ -36,7 +37,7 @@ int		main(int argc, char const *argv[])
 		else
 			printf("%d : FAIL\n", j);
 	}
-	printf("Among %d tests, %d successful.\n", nb_tests, cnt);
+	printf("Among %d tests, %d successful.\n", nb_tests, cnt);*/
 
 	return 0;
 }
@@ -46,7 +47,7 @@ void	bench_filip_dsm()
 {
 	init_dsm_filter();
 
-	int			k_size = 16384, m_size = 5, i, nb_sets = 1;
+	int			k_size = 16384, m_size = 100, i, nb_sets = 1;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
@@ -123,15 +124,15 @@ void	init_dsm_filter()
 
 void	init_thr_filter()
 {
-	xor_vars_nb = 81;
-	thr_vars_nb = 63;
+	xor_vars_nb = 9;
+	thr_vars_nb = 7;
 	nb_var = xor_vars_nb + thr_vars_nb;
 }
 
 
 void	init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size)
 {
-	TGSW_PARAMS = new_TGswParams(vars->l, 1, new_TLweParams(vars->N, vars->k, 0., 1.));
+	TGSW_PARAMS = new_TGswParams(vars->l, 5, new_TLweParams(vars->N, vars->k, 0., 1.));
 	TGSW_KEY = new_random_key(TGSW_PARAMS);
 
 	*h_key = allocate_tgsw_array(k_size);
@@ -179,7 +180,7 @@ void	init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets)
 {
 	sets->k = 1;
 	sets->N = 512;
-	sets->l = 20;
+	sets->l = 6;
 	sets->alpha = 1e-9;
 
 	/*(sets + 1)->k = 1;
