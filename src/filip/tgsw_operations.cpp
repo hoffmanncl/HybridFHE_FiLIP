@@ -73,9 +73,22 @@ void	tGswHomSub(TGswSample *result, const TGswSample *sample, const TGswParams *
 void	tGswHomAddMu(TGswSample *result, int32_t message, const TGswParams *params)
 {
 	if(message == 1)
-		tGswAddH(result, params);
-}
+	{
+		const Torus32	*h = params->h;
+		int32_t			i, j, d, bloc;
 
+		for(i = 0 ; i < params->l * (params->tlwe_params->k + 1) ; i++)
+			for(j = 0 ; j < params->tlwe_params->k + 1 ; j++)
+				for(d = 0 ; d < params->tlwe_params->N ; d++)
+					result->all_sample[i].a[j].coefsT[d] *= -1;
+
+
+		for (bloc = 0; bloc <= params->tlwe_params->k; bloc++)
+			for (i = 0; i < params->l; i++)
+				result->bloc_sample[bloc][i].a[bloc].coefsT[0] += h[i];
+	}
+}
+	
 
 // result = result . sample - less noise growth if sample is the lower noise cipher
 void	tGswHomMul(TGswSample *result, const TGswSample *sample, const TGswParams *params)

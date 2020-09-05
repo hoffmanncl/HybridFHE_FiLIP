@@ -23,6 +23,19 @@ void		set_whitening (long* whitening, long len)
 //indice is here to have free-fhe shuffle
 //mf is the vector describing the filtering function as follows: mf[i] is the number of monomials of degree i
 //size is algebraic degree of the filtering function
+
+
+long		filter(long *state)
+{
+	if(filter_code == 1)
+		return dsm_filter(state);
+	else if(filter_code == 2)
+		return thr_filter(state);
+	else
+		printf("ERR : WRONG FILTER CODE\n");
+}
+
+
 long		dsm_filter(long *state)
 {
 	long temp,output = 0;
@@ -51,22 +64,22 @@ long		thr_filter(long *state)
 	int32_t	i, cnt = 0;
 	long	result = 0;
 
-	printf("plain state : ");
-	for(i = 0 ; i < xor_vars_nb ; i++)
-		printf("%ld", state[i]);
-	printf(" ");
-	for(i = xor_vars_nb ; i < nb_var ; i++)
-		printf("%ld", state[i]);
-	printf("\n");
-
 	for(i = 0 ; i < xor_vars_nb ; i++)
 		result ^= state[i];
+
+	//printf("After xor : %ld\n", result);
+
+	printf("plain state : ");
+	for(i = xor_vars_nb ; i < nb_var ; i++)
+		printf("%ld", state[i]);
+	printf("\n\n");
 
 	for(i = 0 ; i < thr_vars_nb ; i++)
 		cnt += state[xor_vars_nb + i];
 	result ^= (cnt > thr_vars_nb / 2) ? 1 : 0;
 
-	printf("output : %ld\n\n\n", result);
+	//printf("output : %ld\n", result);
+
 	return result;
 
 }
@@ -88,11 +101,11 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size)
 	{
 		shuffle(indice, k_size);
 		set_whitening(whitening, nb_var);
-
 		for(j = 0 ; j < nb_var ; j++)
 			state[j] = key[indice[j]] ^ whitening[j];
 
-		output[i] = input[i] ^ dsm_filter(state);
+		//printf("%d--------\n", i);
+		output[i] = input[i] ^ filter(state);
 	}
 
 	free(state);

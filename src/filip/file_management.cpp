@@ -56,6 +56,8 @@ void	read_filip_key(long *key, TGswSample **h_key, int k_size, char *dir_name)
 	char	file_name[100];
 	int		i;
 
+	printf("Loading filip key from %s ...\n", dir_name);
+
 	sprintf(file_name, "%s/plain_key", dir_name);
 	fd = fopen(file_name, "r");
 	assert(fd != NULL);
@@ -71,6 +73,7 @@ void	read_filip_key(long *key, TGswSample **h_key, int k_size, char *dir_name)
 		read_tgsw_sample(h_key[i], fd);
 		fclose(fd);
 	}
+	printf("Key loaded.\n");
 }
 
 

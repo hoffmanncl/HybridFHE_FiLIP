@@ -29,7 +29,8 @@ using namespace std;
 
 extern TGswParams	*TGSW_PARAMS;
 extern TGswKey		*TGSW_KEY;
-extern double		alpha;
+
+extern int			filter_code;
 extern int			degree;
 extern long			*mf;
 extern int32_t		xor_vars_nb;
@@ -43,6 +44,7 @@ typedef struct	tgsw_vars
 {
 	int32_t	k;
 	int32_t	N;
+	int32_t	bgbit;
 	int32_t	l;
 	double	alpha;
 }				tgsw_vars;
@@ -66,6 +68,7 @@ void		shuffle(long *list, long len);
 // filip_user.cpp
 
 void		set_whitening (long* whitening, long len);
+long		filter(long *state);
 long		dsm_filter(long *state);
 long		thr_filter(long *state);
 
@@ -74,7 +77,7 @@ void		FiLIP(long *output, long *input, int m_size, long *key, int k_size);
 
 // filip_server.cpp
 
-void		set_hom_whitening(TGswSample **h_whitening, int len);
+void		hom_filter(TGswSample *result, TGswSample **h_state);
 void		hom_dsm_filter(TGswSample *result, TGswSample **h_state);
 void		hom_thr_filter(TGswSample *result, TGswSample **h_state);
 void		hom_FiLIP(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size);
@@ -82,9 +85,6 @@ void		hom_maj(TGswSample *result, TGswSample **h_state);
 void		rhombus_upper_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_middle_line(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
 void		rhombus_lower_half(TGswSample **previous_layer, TGswSample **current_layer, TGswSample **h_state);
-
-void		hom_dsm_filter_var(TGswSample *result, TGswSample **h_state, int32_t **noises, int32_t instance);
-void		hom_FiLIP_var(TGswSample **output, TGswSample **input, int m_size, TGswSample **key, int k_size, int32_t **noises);
 
 
 // file_management.cpp
@@ -105,16 +105,18 @@ int			get_alpha_exp(double alpha);
 
 // main.cpp
 
-void		bench_filip_dsm();
+void		bench_filip();
 
+void		init_filter();
 void		init_dsm_filter();
 void		init_thr_filter();
-void		init_tgsw(tgsw_vars *vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
+void		init_tgsw(tgsw_vars vars, TGswSample ***h_key, TGswSample ***h_message, TGswSample ***h_cipher, int32_t k_size, int32_t m_size);
 void		free_tgsw(TGswSample **h_key, TGswSample **h_message, TGswSample **h_cipher, int32_t k_size, int32_t m_size);
-void		init_tgsw_sets(tgsw_vars *sets, int32_t nb_sets);
+tgsw_vars	init_tgsw_set();
 TGswSample** allocate_tgsw_array(int size);
 void		free_tgsw_array(TGswSample **array, int size);
-void		display_tgsw_set(tgsw_vars *vars);
+void		display_tgsw_set(tgsw_vars vars);
+void		display_filter(int32_t m_size, int32_t k_size);
 
 
 
