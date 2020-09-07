@@ -37,7 +37,8 @@ void		deepcopy_tlwe_sample(TLweSample *copy, const TLweSample *sample);
 void		deepcopy_torus_polynomial(TorusPolynomial *copy, const TorusPolynomial *poly);
 
 long double	get_variance(int32_t *noises, int32_t size);
-long double	get_average(long double *noises, int32_t size);
+long double	get_r_average(long double *noises, int32_t size);
+int32_t		get_average(int32_t *noises, int32_t size);
 
 
 

@@ -131,7 +131,7 @@ Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
 	int32_t			result;				// Should not overflow
 
 	tLwePhase(phase, c, &key->tlwe_key);
-	deciphered = tLweSymDecryptT(c, &key->tlwe_key, 2);
+	deciphered = tLweSymDecryptT(c, &key->tlwe_key, key->params->Bg);
 	result = deciphered - phase->coefsT[0];
 
 	return result > 0 ? result : -result;
@@ -170,7 +170,7 @@ long double	get_variance(int32_t *noises, int32_t size)
 	for(i = 0 ; i < size ; i++)
 		r_noises[i] = (long double)noises[i] / ((long long unsigned int)1<<32);
 
-	avr = get_average(r_noises, size);
+	avr = get_r_average(r_noises, size);
 	for(int i = 0 ; i < size ; i++)
 		var = (i * var + (r_noises[i] - avr) * (r_noises[i] - avr)) / (i + 1);
 
@@ -179,11 +179,22 @@ long double	get_variance(int32_t *noises, int32_t size)
 }
 
 
-long double	get_average(long double *noises, int32_t size)
+long double	get_r_average(long double *noises, int32_t size)
 {
 	long double	avr = 0;
 
 	for(int i = 0 ; i < size ; i++)
 		avr = (i * avr + noises[i]) / (i + 1);
 	return avr;
+}
+
+
+int32_t		get_average(int32_t *noises, int32_t size)
+{
+	int64_t	avr = 0;
+	for(int i = 0 ; i < size ; i++)
+		avr += noises[i];
+	avr /= size;
+
+	return (int32_t)avr;
 }

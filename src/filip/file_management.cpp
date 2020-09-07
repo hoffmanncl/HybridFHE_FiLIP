@@ -73,7 +73,7 @@ void	read_filip_key(long *key, TGswSample **h_key, int k_size, char *dir_name)
 		read_tgsw_sample(h_key[i], fd);
 		fclose(fd);
 	}
-	printf("Key loaded.\n");
+	printf("Key loaded.\n\n");
 }
 
 

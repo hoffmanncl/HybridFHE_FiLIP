@@ -69,11 +69,6 @@ long		thr_filter(long *state)
 
 	//printf("After xor : %ld\n", result);
 
-	printf("plain state : ");
-	for(i = xor_vars_nb ; i < nb_var ; i++)
-		printf("%ld", state[i]);
-	printf("\n\n");
-
 	for(i = 0 ; i < thr_vars_nb ; i++)
 		cnt += state[xor_vars_nb + i];
 	result ^= (cnt > thr_vars_nb / 2) ? 1 : 0;

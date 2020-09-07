@@ -37,8 +37,6 @@ extern int32_t		xor_vars_nb;
 extern int32_t		thr_vars_nb;
 extern int			nb_var;
 
-extern int32_t		**noises;
-extern int			noise_cnt;
 
 typedef struct	tgsw_vars
 {
