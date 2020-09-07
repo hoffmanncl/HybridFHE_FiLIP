@@ -34,10 +34,10 @@ int		main(int argc, char const *argv[])
 
 void	bench_filip()
 {
-	filter_code = 1;
+	filter_code = 2;
 	init_filter();
 
-	int			k_size = 4096, m_size = 500, i;
+	int			k_size = 16384, m_size = 100, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
