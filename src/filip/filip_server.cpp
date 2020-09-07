@@ -11,13 +11,8 @@ void	hom_dsm_filter(LweSample *result, LweSample *h_state)
 
 	bootsCOPY(result, h_state + nb++, &KEY->cloud);
 	for(i = 1 ; i < mf[0] ; i++)
-	{
-		printf("%d + %d = ", bootsSymDecrypt(result, KEY), bootsSymDecrypt(h_state + nb, KEY));
 		bootsXOR(result, result, h_state + nb++, &KEY->cloud);
-		printf("%d\n", bootsSymDecrypt(result, KEY));
-	}
 
-	printf("After linear operations : %d\n", bootsSymDecrypt(result, KEY));
 
 	for(i = 1 ; i < degree ; i++)
 		for(j = 0 ; j < mf[i] ; j++)
@@ -63,11 +58,6 @@ void	hom_FiLIP(LweSample *output, LweSample *input, int m_size, LweSample *key, 
 			else
 				bootsCOPY(h_state + j, key + indice[j], &KEY->cloud);
 		}
-
-		printf("h_state : ");
-		for(int k = 0 ; k < 32 ; k++)
-			printf("%d", bootsSymDecrypt(h_state + k, KEY));
-		printf("\n");
 
 		hom_dsm_filter(tmp, h_state);
 		bootsXOR(output + i, input + i, tmp, &KEY->cloud);
