@@ -141,11 +141,11 @@ Torus32	getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key)
 void	deepcopy_tgsw(TGswSample *copy, const TGswSample *sample)
 {
 	for(int i = 0 ; i < (copy->k + 1) * copy->l ; i++)
-		deepcopy_tlwe_sample(&copy->all_sample[i], &sample->all_sample[i]);
+		deepcopy_tlwe(&copy->all_sample[i], &sample->all_sample[i]);
 }
 
 
-void	deepcopy_tlwe_sample(TLweSample *copy, const TLweSample *sample)
+void	deepcopy_tlwe(TLweSample *copy, const TLweSample *sample)
 {
 	copy->current_variance = sample->current_variance;
 	for(int i = 0 ; i < copy->k + 1 ; i++) 

@@ -33,7 +33,7 @@ void		tGswHomMux(TGswSample *result, const TGswSample *c, const TGswSample *s1, 
 
 Torus32		getTGswCipherNoise(const TGswSample *cipher, const TGswKey *key);
 void		deepcopy_tgsw(TGswSample *copy, const TGswSample *sample);
-void		deepcopy_tlwe_sample(TLweSample *copy, const TLweSample *sample);
+void		deepcopy_tlwe(TLweSample *copy, const TLweSample *sample);
 void		deepcopy_torus_polynomial(TorusPolynomial *copy, const TorusPolynomial *poly);
 
 long double	get_variance(int32_t *noises, int32_t size);

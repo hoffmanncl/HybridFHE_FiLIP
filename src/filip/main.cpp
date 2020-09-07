@@ -16,7 +16,7 @@ int			nb_var;
 
 int		main(int argc, char const *argv[])
 {
-	bench_filip();
+	bench_filip_tlwe();
 
 
 	/*FILE	*fd = fopen("noises", "r");
@@ -37,7 +37,7 @@ void	bench_filip()
 	filter_code = 2;
 	init_filter();
 
-	int			k_size = 16384, m_size = 100, i;
+	int			k_size = 16384, m_size = 20, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
@@ -105,6 +105,62 @@ void	bench_filip()
 	free(message);
 	free(cipher);
 	free(noises);
+}
+
+
+void	bench_filip_tlwe()
+{
+	filter_code = 1;
+	init_dsm_filter();
+
+	int			k_size = 4096, m_size = 500, i;
+
+	long		*key = (long*)malloc(sizeof(long) * k_size);
+	long		*message = (long*)malloc(sizeof(long) * m_size);
+	long		*cipher = (long*)malloc(sizeof(long) * m_size);
+
+	TGswSample	**h_key;
+	TLweSample	**h_message, **h_cipher;
+	tgsw_vars	variables_set = init_tgsw_set();
+
+	clock_t		inter;
+
+
+	printf("\nm_size = %d ; k_size = %d ; mf = [", m_size, k_size);
+	for(i = 0 ; i < degree - 1 ; i++)
+		printf("%ld, ", mf[i]);
+	printf("%ld]\n\n\n", mf[degree - 1]);
+
+	new_random_binary_sequence(message, m_size);
+
+	init_tlwe(variables_set, &h_key, &h_message, &h_cipher, k_size, m_size);
+	load_filip_key(key, h_key, k_size, variables_set.alpha);
+	display_tgsw_set(variables_set);
+
+	for(i = 0 ; i < m_size ; i++)
+		tLweEncryptB(h_message[i], message[i], variables_set.alpha, &TGSW_KEY->tlwe_key);
+
+	reset_prng();
+	FiLIP(cipher, message, m_size, key, k_size);
+	reset_prng();
+	inter = clock();
+	thom_FiLIP(h_cipher, h_message, m_size, h_key, k_size);
+	inter = clock() - inter;
+
+	for(i = 0 ; i < m_size ; i++)
+		if(tLweDecryptB(h_cipher[i], &TGSW_KEY->tlwe_key) != cipher[i])
+			break;
+
+
+	if(i != m_size)
+		printf("Error in FiLIP homomorphic evaluation :x\n");
+	else
+		printf("Successful FiLIP evaluation !\n\tTime = %dms/b.\n", (int)((double)inter * 1000 / (CLOCKS_PER_SEC * m_size)));
+
+
+	free(key);
+	free(message);
+	free(cipher);
 }
 
 
@@ -177,14 +233,25 @@ void	init_tgsw(tgsw_vars vars, TGswSample ***h_key, TGswSample ***h_message, TGs
 }
 
 
+void	init_tlwe(tgsw_vars vars, TGswSample ***h_key, TLweSample ***h_message, TLweSample ***h_cipher, int32_t k_size, int32_t m_size)
+{
+	TGSW_PARAMS = new_TGswParams(vars.l, vars.bgbit, new_TLweParams(vars.N, vars.k, 0., 1.));
+	TGSW_KEY = new_random_key(TGSW_PARAMS);
+
+	*h_key = allocate_tgsw_array(k_size);
+	*h_message = allocate_tlwe_array(m_size);
+	*h_cipher = allocate_tlwe_array(m_size);
+}
+
+
 tgsw_vars init_tgsw_set()
 {
 	tgsw_vars	set;
 
 	set.k = 1;
 	set.N = 1024;
-	set.bgbit = 5;
-	set.l = 6;
+	set.bgbit = 1;
+	set.l = 20;
 	set.alpha = 1e-9;
 
 	return set;
@@ -208,6 +275,16 @@ TGswSample**	allocate_tgsw_array(int size)
 
 	for(int i = 0 ; i < size ; i++)
 		array[i] = new_TGswSample(TGSW_PARAMS);
+	return array;
+}
+
+
+TLweSample**	allocate_tlwe_array(int size)
+{
+	TLweSample	**array = (TLweSample**)malloc(sizeof(TLweSample*) * size);
+
+	for(int i = 0 ; i < size ; i++)
+		array[i] = new_TLweSample(TGSW_PARAMS->tlwe_params);
 	return array;
 }
 
