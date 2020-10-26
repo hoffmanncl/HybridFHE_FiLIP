@@ -12,11 +12,45 @@ int32_t		xor_vars_nb;
 int32_t		thr_vars_nb;
 int			nb_var;
 
+int32_t		g_cnt1;
+int32_t		g_cnt0;
+int32_t		****global_noise_mu1;
+int32_t		****global_noise_mu0;
+int32_t		***flags;
+
 
 
 int		main(int argc, char const *argv[])
 {
-	bench_filip_tlwe();
+	g_cnt1 = 0;
+	g_cnt0 = 0;
+	global_noise_mu1 = (int32_t****)malloc(sizeof(int32_t***) * 100);
+	global_noise_mu0 = (int32_t****)malloc(sizeof(int32_t***) * 100);
+	for(int i = 0 ; i < 100 ; i++)
+	{
+		global_noise_mu1[i] = (int32_t***)malloc(sizeof(int32_t**) * 16);
+		global_noise_mu0[i] = (int32_t***)malloc(sizeof(int32_t**) * 16);
+		flags = (int32_t***)malloc(sizeof(int32_t**) * 16);
+		for(int j = 0 ; j < 16 ; j++)
+		{
+			global_noise_mu1[i][j] = (int32_t**)malloc(sizeof(int32_t*) * 128);
+			global_noise_mu0[i][j] = (int32_t**)malloc(sizeof(int32_t*) * 128);
+			flags[j] = (int32_t**)malloc(sizeof(int32_t*) * 128);
+			for(int k = 0 ; k < 128 ; k++)
+			{
+				global_noise_mu1[i][j][k] = (int32_t*)malloc(sizeof(int32_t) * 16);
+				global_noise_mu0[i][j][k] = (int32_t*)malloc(sizeof(int32_t) * 16);
+				flags[j][k] = (int32_t*)malloc(sizeof(int32_t) * 16);
+				for(int l = 0 ; l < 16 ; l++)
+				{
+					flags[j][k][l] = 0;
+					global_noise_mu1[i][j][k][l] = 0;
+					global_noise_mu0[i][j][k][l] = 0;
+				}
+			}
+		}
+	}
+	bench_filip();
 
 
 	/*FILE	*fd = fopen("noises", "r");
@@ -34,10 +68,10 @@ int		main(int argc, char const *argv[])
 
 void	bench_filip()
 {
-	filter_code = 2;
+	filter_code = 1;
 	init_filter();
 
-	int			k_size = 16384, m_size = 20, i;
+	int			k_size = 16384, m_size = 100, i;
 
 	long		*key = (long*)malloc(sizeof(long) * k_size);
 	long		*message = (long*)malloc(sizeof(long) * m_size);
@@ -250,8 +284,8 @@ tgsw_vars init_tgsw_set()
 
 	set.k = 1;
 	set.N = 1024;
-	set.bgbit = 1;
-	set.l = 20;
+	set.bgbit = 5;
+	set.l = 6;
 	set.alpha = 1e-9;
 
 	return set;

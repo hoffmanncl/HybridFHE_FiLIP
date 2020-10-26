@@ -37,6 +37,12 @@ extern int32_t		xor_vars_nb;
 extern int32_t		thr_vars_nb;
 extern int			nb_var;
 
+extern int32_t		g_cnt1;
+extern int32_t		g_cnt0;
+extern int32_t		****global_noise_mu1;
+extern int32_t		****global_noise_mu0;
+extern int32_t		***flags;
+
 
 typedef struct	tgsw_vars
 {

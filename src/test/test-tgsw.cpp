@@ -32,19 +32,14 @@ void		test_write_read_file(const TGswKey *key, double alpha);
 
 int			main(int argc, char const *argv[])
 {
-	printf("ALLO \n");
 	srand(time(NULL));
-	TGswParams *params = new_TGswParams(24, 1, new_TLweParams(512, 1, 0., 1.));
+	TGswParams *params = new_TGswParams(6, 5, new_TLweParams(1024, 1, 0., 1.));
 
-	printf("ALLO\n");
 	// l, Bgbit = log_2(Bg), N, k, alpha_min, alpha_max
 	TGswKey		*key = new_random_key(params);
-	printf("ALOO\n");
 	double		alpha = 1e-9;
 
-	printf("ALLO\n");
-
-	test_tGswHomAddMu(key, alpha, 100);
+	test_mul_noise(key, alpha, 100);
 
 	delete_TGswParams(params);
 	delete_TGswKey(key);

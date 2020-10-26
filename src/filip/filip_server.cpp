@@ -29,7 +29,21 @@ void	hom_dsm_filter(TGswSample *result, TGswSample **h_state)
 		{
 			deepcopy_tgsw(tmp, h_state[nb++]);
 			for(k = 1 ; k < i + 1 ; k++)
+			{
 				tGswHomMul(tmp, h_state[nb++], TGSW_PARAMS);
+				flags[i][j][k] = 1;
+				if(tGswDecryptB(h_state[nb - 1], TGSW_KEY) == 1)
+				{
+					global_noise_mu1[g_cnt1][i][j][k] = getTGswCipherNoise(tmp, TGSW_KEY);
+					g_cnt1++;
+				}
+				else
+				{
+					global_noise_mu0[g_cnt0][i][j][k] = getTGswCipherNoise(tmp, TGSW_KEY);
+					g_cnt0++;
+				}
+
+			}
 			tGswHomAdd(result, tmp, TGSW_PARAMS);
 		}
 	delete_TGswSample(tmp);
